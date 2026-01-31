@@ -1,0 +1,153 @@
+{
+  "identity": {
+    "name": "Legenddary",
+    "persona": "E1 - The Anti-AI Designer",
+    "tone": "Premium, Legendary, Professional, Intuitive, Warm, Earthy",
+    "audience": "Authors, writers, self-publishers, content creators"
+  },
+  "typography": {
+    "headings": {
+      "fontFamily": "Playfair Display, serif",
+      "weights": ["400", "600", "700", "900"],
+      "usage": "All major headings (H1-H3). Use tracking-tight for sizes > 32px."
+    },
+    "body": {
+      "fontFamily": "Manrope, sans-serif",
+      "weights": ["300", "400", "500", "600"],
+      "usage": "UI text, dashboard metrics, buttons."
+    },
+    "editor": {
+      "fontFamily": "Merriweather, serif",
+      "weights": ["300", "400", "700"],
+      "usage": "The actual book writing content (for readability)."
+    },
+    "mono": {
+      "fontFamily": "JetBrains Mono, monospace",
+      "usage": "Technical data, ISBN numbers, code snippets."
+    }
+  },
+  "colors": {
+    "palette": {
+      "primary": {
+        "default": "#D4AF37",
+        "hover": "#B5952F",
+        "foreground": "#0A0A0A",
+        "description": "Metallic Gold. Use for primary CTAs and key highlights."
+      },
+      "secondary": {
+        "default": "#2A2A2A",
+        "hover": "#3A3A3A",
+        "foreground": "#F5F5F0",
+        "description": "Warm Charcoal. Use for secondary buttons and cards in dark mode."
+      },
+      "background": {
+        "dark": "#0A0A0A",
+        "light": "#F9F9F7",
+        "paper": "#F0F0EB",
+        "description": "Deep Obsidian for Dashboard/Landing. Warm Paper for Editor."
+      },
+      "accent": {
+        "default": "#E5E5E0",
+        "foreground": "#1A1A1A",
+        "description": "Soft Stone. Use for subtle borders and dividers."
+      },
+      "destructive": {
+        "default": "#7F1D1D",
+        "foreground": "#FFFFFF",
+        "description": "Deep Crimson. Use for delete actions."
+      }
+    },
+    "gradients": {
+      "gold_shimmer": "linear-gradient(135deg, #D4AF37 0%, #F2D06B 50%, #D4AF37 100%)",
+      "obsidian_depth": "linear-gradient(180deg, #0A0A0A 0%, #1A1A1A 100%)"
+    }
+  },
+  "layout": {
+    "spacing": {
+      "base": "0.25rem",
+      "scale": ["p-1", "p-2", "p-4", "p-6", "p-8", "p-12", "p-16", "p-24", "p-32"],
+      "philosophy": "Generous spacing. Use 2-3x more padding than standard templates."
+    },
+    "grids": {
+      "dashboard": "Bento Grid (Mode B). Dense, data-correlated, no jagged bottoms.",
+      "marketing": "Tetris Grid (Mode A). Asymmetric, visual tension, overlapping elements."
+    },
+    "containers": {
+      "maxWidth": "max-w-7xl",
+      "padding": "px-6 md:px-12 lg:px-24"
+    }
+  },
+  "components": {
+    "buttons": {
+      "primary": "bg-primary text-primary-foreground hover:bg-primary/90 rounded-full px-8 py-6 font-semibold shadow-[0_0_15px_rgba(212,175,55,0.3)] transition-all hover:scale-105",
+      "secondary": "bg-secondary text-secondary-foreground hover:bg-secondary/80 rounded-full px-8 py-6 font-medium border border-white/10",
+      "ghost": "hover:bg-accent hover:text-accent-foreground rounded-lg px-4 py-2"
+    },
+    "cards": {
+      "dashboard": "bg-card/50 backdrop-blur-xl border border-white/5 rounded-xl p-6 hover:border-primary/20 transition-colors",
+      "feature": "bg-gradient-to-b from-white/5 to-transparent border border-white/10 rounded-2xl p-8 hover:shadow-2xl transition-all"
+    },
+    "inputs": {
+      "default": "bg-background/50 border-input focus:border-primary focus:ring-1 focus:ring-primary rounded-lg h-12 px-4"
+    }
+  },
+  "visual_enhancers": {
+    "glassmorphism": "backdrop-blur-xl bg-black/40 border border-white/10",
+    "textures": "Use subtle grain overlay on dark backgrounds to prevent banding and add 'paper' feel.",
+    "shadows": {
+      "glow": "0 0 20px rgba(212, 175, 55, 0.15)",
+      "deep": "0 20px 40px -10px rgba(0, 0, 0, 0.5)"
+    }
+  },
+  "motion": {
+    "scroll": "Lenis smooth scrolling is MANDATORY.",
+    "transitions": "transition-all duration-300 ease-out",
+    "micro_interactions": "Buttons scale slightly on hover. Cards lift (-translate-y-1).",
+    "entrance": "Staggered fade-in-up for lists and grids."
+  },
+  "media": {
+    "images": {
+      "hero_workspace": {
+        "url": "https://images.unsplash.com/photo-1751200065687-a126e7c304da?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA3MDB8MHwxfHNlYXJjaHwyfHxhdXRob3IlMjB3cml0aW5nJTIwbWluaW1hbGlzdCUyMHdvcmtzcGFjZXxlbnwwfHx8fDE3Njk4NTA4Mzl8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Cozy, dimly lit workspace with books and laptop",
+        "usage": "Hero section background or feature highlight"
+      },
+      "library_shelf": {
+        "url": "https://images.unsplash.com/photo-1613191413904-b4386c99f47a?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzJ8MHwxfHNlYXJjaHwzfHxsdXh1cnklMjBsaWJyYXJ5JTIwYm9vayUyMGNvbGxlY3Rpb24lMjBnb2xkfGVufDB8fHx8MTc2OTg1MDg0Mnww&ixlib=rb-4.1.0&q=85",
+        "alt": "Wooden library shelf with books",
+        "usage": "About section or 'Your Library' empty state"
+      },
+      "cover_design_hand": {
+        "url": "https://images.unsplash.com/photo-1710799885122-428e63eff691?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxNzV8MHwxfHNlYXJjaHwzfHxjcmVhdGl2ZSUyMGJvb2slMjBjb3ZlciUyMGRlc2lnbiUyMHN0dWRpb3xlbnwwfHx8fDE3Njk4NTA4NDd8MA&ixlib=rb-4.1.0&q=85",
+        "alt": "Hand holding a finished book",
+        "usage": "Publishing/Export feature section"
+      }
+    },
+    "icons": "Phosphor Icons (Duotone) for dashboard. Heroicons for general UI."
+  },
+  "libraries": {
+    "charts": "Recharts (via Shadcn Charts)",
+    "3d": "React Three Fiber (for Hero book showcase if needed)",
+    "editor": "Tiptap (Headless, highly customizable)",
+    "drag_drop": "dnd-kit (for Cover Designer)"
+  },
+  "instructions_to_main_agent": [
+    "Implement a 'Premium Dark' theme by default for the Landing Page and Dashboard.",
+    "Implement a 'Paper Light' theme toggle specifically for the Book Editor to reduce eye strain.",
+    "Use the 'Gold Shimmer' gradient sparingly on primary buttons and key text highlights.",
+    "Ensure all borders in dark mode are extremely subtle (white/5 or white/10).",
+    "The 'Signature Studio' should feel like a high-end digital canvas.",
+    "Do not use default Shadcn cards; customize them with the 'glassmorphism' styles defined above.",
+    "For the 'Cover Designer', create a workspace that feels like a professional design tool (dark UI, bright canvas).",
+    "Use 'Playfair Display' for all H1-H3 headings to establish the brand voice.",
+    "Ensure 'Manrope' is used for all UI text for maximum legibility."
+  ],
+  "universal_guidelines": [
+    "Avoid 'AI Slop' - no generic centered layouts or default blue/purple gradients.",
+    "Use z-index layering to create depth.",
+    "Never use 'transition: all'. Animate specific properties.",
+    "Do not center-align the main app container.",
+    "Use 'sonner' for toasts.",
+    "All interactive elements must have 'data-testid'."
+  ]
+}
