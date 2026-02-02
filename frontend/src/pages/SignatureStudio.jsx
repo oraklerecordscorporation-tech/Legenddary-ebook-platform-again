@@ -162,9 +162,9 @@ const SignatureStudio = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] flex">
+    <div className="min-h-screen bg-[#0A0A0A] text-[#F5F5F0] flex flex-col md:flex-row">
       {/* Sidebar - Controls */}
-      <aside className="w-72 border-r border-white/5 flex flex-col">
+      <aside className="w-full md:w-72 border-b md:border-b-0 md:border-r border-white/5 flex flex-col">
         <div className="p-4 border-b border-white/5">
           <Link to="/dashboard" className="flex items-center gap-2 text-sm text-[#E5E5E0]/60 hover:text-[#E5E5E0] mb-4" data-testid="back-to-dashboard">
             <ArrowLeft className="w-4 h-4" />
