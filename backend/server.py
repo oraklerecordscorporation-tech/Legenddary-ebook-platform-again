@@ -598,7 +598,7 @@ async def generate_epub(book: dict, chapters: list) -> dict:
 
 @api_router.get("/stats")
 async def get_stats(user: dict = Depends(get_current_user)):
-    books = await db.books.find({"user_id": user["id"]}, {"_id": 0}).to_list(100)
+    books = await db.books.find({"user_id": user["id"]}, {"_id": 0, "word_count": 1, "chapter_count": 1}).to_list(100)
     total_books = len(books)
     total_words = sum(b.get("word_count", 0) for b in books)
     total_chapters = sum(b.get("chapter_count", 0) for b in books)
