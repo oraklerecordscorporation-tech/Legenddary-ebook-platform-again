@@ -32,7 +32,9 @@ client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ['DB_NAME']]
 
 # JWT Config
-JWT_SECRET = os.environ.get('JWT_SECRET', 'legenddary-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET')
+if not JWT_SECRET:
+    JWT_SECRET = os.environ.get('EMERGENT_LLM_KEY', 'fallback-dev-only')  # Use LLM key as fallback for dev
 JWT_ALGORITHM = "HS256"
 
 # Emergent LLM Key
