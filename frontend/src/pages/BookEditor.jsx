@@ -574,63 +574,133 @@ const BookEditor = () => {
   );
 };
 
-const AIPanel = ({ aiPrompt, setAiPrompt, aiLoading, requestAI, aiResult }) => (
-  <div className="flex flex-col h-full">
-    <div className="p-4 border-b border-white/5">
-      <h3 className="text-lg font-semibold flex items-center gap-2" style={{ fontFamily: 'Playfair Display, serif' }}>
-        <Sparkles className="w-5 h-5 text-[#D4AF37]" />
-        AI Assistant
-      </h3>
-    </div>
+const AIPanel = ({ aiPrompt, setAiPrompt, aiLoading, requestAI, aiHistory, clearAiHistory }) => {
+  const typeLabels = {
+    content: { label: '💡 Content Suggestion', color: 'text-blue-400' },
+    footnote: { label: '📝 Footnote Suggestion', color: 'text-green-400' },
+    style: { label: '✨ Style Improvement', color: 'text-purple-400' },
+  };
 
-    <Tabs defaultValue="content" className="flex-1 flex flex-col">
-      <TabsList className="mx-4 mt-4 bg-white/5">
-        <TabsTrigger value="content" className="flex-1 text-xs data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#0A0A0A]">Content</TabsTrigger>
-        <TabsTrigger value="footnote" className="flex-1 text-xs data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#0A0A0A]">Notes</TabsTrigger>
-        <TabsTrigger value="style" className="flex-1 text-xs data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#0A0A0A]">Style</TabsTrigger>
-      </TabsList>
+  return (
+    <div className="flex flex-col h-full">
+      <div className="p-4 border-b border-white/5">
+        <h3 className="text-lg font-semibold flex items-center gap-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+          <Sparkles className="w-5 h-5 text-[#D4AF37]" />
+          AI Writing Assistant
+        </h3>
+        <p className="text-xs text-[#E5E5E0]/50 mt-1">Powered by GPT-5.2</p>
+      </div>
 
-      <TabsContent value="content" className="flex-1 flex flex-col p-4 space-y-4">
-        <Textarea
-          placeholder="Ask for content suggestions..."
-          value={aiPrompt}
-          onChange={(e) => setAiPrompt(e.target.value)}
-          className="bg-white/5 border-white/10 min-h-[80px] text-sm"
-          data-testid="ai-prompt-input"
-        />
-        <Button onClick={() => requestAI('content')} disabled={aiLoading} className="gold-shimmer text-[#0A0A0A]" data-testid="ai-suggest-content">
-          {aiLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
-          Get Suggestions
-        </Button>
-      </TabsContent>
+      <Tabs defaultValue="content" className="flex-1 flex flex-col overflow-hidden">
+        <TabsList className="mx-4 mt-4 bg-white/5 shrink-0">
+          <TabsTrigger value="content" className="flex-1 text-xs data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#0A0A0A]">Content</TabsTrigger>
+          <TabsTrigger value="footnote" className="flex-1 text-xs data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#0A0A0A]">Notes</TabsTrigger>
+          <TabsTrigger value="style" className="flex-1 text-xs data-[state=active]:bg-[#D4AF37] data-[state=active]:text-[#0A0A0A]">Style</TabsTrigger>
+        </TabsList>
 
-      <TabsContent value="footnote" className="flex-1 flex flex-col p-4 space-y-4">
-        <p className="text-sm text-[#E5E5E0]/60">Get footnote suggestions based on your current content.</p>
-        <Button onClick={() => requestAI('footnote')} disabled={aiLoading} className="gold-shimmer text-[#0A0A0A]" data-testid="ai-suggest-footnote">
-          {aiLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
-          Suggest Footnotes
-        </Button>
-      </TabsContent>
+        <TabsContent value="content" className="flex flex-col p-4 space-y-3 shrink-0">
+          <Textarea
+            placeholder="What would you like help with? E.g., 'Give me ideas for the next scene' or 'Help me describe the setting'"
+            value={aiPrompt}
+            onChange={(e) => setAiPrompt(e.target.value)}
+            className="bg-white/5 border-white/10 min-h-[70px] text-sm resize-none"
+            data-testid="ai-prompt-input"
+          />
+          <Button onClick={() => requestAI('content')} disabled={aiLoading} className="gold-shimmer text-[#0A0A0A] w-full" data-testid="ai-suggest-content">
+            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
+            Get Content Ideas
+          </Button>
+        </TabsContent>
 
-      <TabsContent value="style" className="flex-1 flex flex-col p-4 space-y-4">
-        <p className="text-sm text-[#E5E5E0]/60">Get style, grammar, and flow improvements.</p>
-        <Button onClick={() => requestAI('style')} disabled={aiLoading} className="gold-shimmer text-[#0A0A0A]" data-testid="ai-suggest-style">
-          {aiLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
-          Improve Style
-        </Button>
-      </TabsContent>
-    </Tabs>
+        <TabsContent value="footnote" className="flex flex-col p-4 space-y-3 shrink-0">
+          <p className="text-sm text-[#E5E5E0]/60">Analyzes your current text and suggests relevant footnotes, citations, and references.</p>
+          <Button onClick={() => requestAI('footnote')} disabled={aiLoading} className="gold-shimmer text-[#0A0A0A] w-full" data-testid="ai-suggest-footnote">
+            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
+            Generate Footnotes
+          </Button>
+        </TabsContent>
 
-    {aiResult && (
-      <div className="p-4 border-t border-white/5">
-        <h4 className="text-sm font-medium mb-2 text-[#D4AF37]">AI Response</h4>
-        <ScrollArea className="h-40">
-          <p className="text-sm text-[#E5E5E0]/80 whitespace-pre-wrap" data-testid="ai-result">{aiResult}</p>
+        <TabsContent value="style" className="flex flex-col p-4 space-y-3 shrink-0">
+          <p className="text-sm text-[#E5E5E0]/60">Reviews your writing for grammar, style, flow, and readability improvements.</p>
+          <Button onClick={() => requestAI('style')} disabled={aiLoading} className="gold-shimmer text-[#0A0A0A] w-full" data-testid="ai-suggest-style">
+            {aiLoading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lightbulb className="w-4 h-4 mr-2" />}
+            Improve My Writing
+          </Button>
+        </TabsContent>
+      </Tabs>
+
+      {/* AI Response History */}
+      <div className="flex-1 border-t border-white/5 flex flex-col min-h-0 overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-2 bg-white/[0.02] shrink-0">
+          <span className="text-xs font-medium text-[#E5E5E0]/60">
+            {aiHistory.length > 0 ? `${aiHistory.length} Response${aiHistory.length > 1 ? 's' : ''}` : 'No responses yet'}
+          </span>
+          {aiHistory.length > 0 && (
+            <button 
+              onClick={clearAiHistory}
+              className="text-xs text-[#E5E5E0]/40 hover:text-[#E5E5E0]/60 transition-colors"
+            >
+              Clear All
+            </button>
+          )}
+        </div>
+        
+        <ScrollArea className="flex-1">
+          <div className="p-4 space-y-4">
+            {aiHistory.length === 0 ? (
+              <div className="text-center py-8">
+                <Sparkles className="w-8 h-8 mx-auto mb-2 text-[#D4AF37]/30" />
+                <p className="text-sm text-[#E5E5E0]/40">
+                  Ask a question or request suggestions to get started
+                </p>
+              </div>
+            ) : (
+              aiHistory.map((entry, index) => (
+                <div 
+                  key={entry.id}
+                  className="rounded-lg bg-white/[0.03] border border-white/5 overflow-hidden"
+                  data-testid={`ai-response-${index}`}
+                >
+                  {/* Response Header */}
+                  <div className="px-3 py-2 bg-white/[0.02] border-b border-white/5 flex items-center justify-between">
+                    <span className={`text-xs font-medium ${typeLabels[entry.type]?.color || 'text-[#D4AF37]'}`}>
+                      {typeLabels[entry.type]?.label || 'AI Response'}
+                    </span>
+                    <span className="text-[10px] text-[#E5E5E0]/30">
+                      {entry.timestamp}
+                    </span>
+                  </div>
+                  
+                  {/* User Prompt (if custom) */}
+                  {entry.prompt && !entry.prompt.startsWith('Help me with') && (
+                    <div className="px-3 py-2 bg-[#D4AF37]/5 border-b border-white/5">
+                      <p className="text-xs text-[#E5E5E0]/50 mb-1">You asked:</p>
+                      <p className="text-sm text-[#E5E5E0]/80 italic">"{entry.prompt}"</p>
+                    </div>
+                  )}
+                  
+                  {/* AI Response */}
+                  <div className="p-3">
+                    <p className="text-sm text-[#E5E5E0]/90 whitespace-pre-wrap leading-relaxed">
+                      {entry.response}
+                    </p>
+                  </div>
+                  
+                  {/* Response Footer */}
+                  <div className="px-3 py-2 bg-white/[0.02] border-t border-white/5">
+                    <p className="text-[10px] text-[#E5E5E0]/30">
+                      Tip: You can copy any text and paste it directly into your chapter
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </ScrollArea>
       </div>
-    )}
-  </div>
-);
+    </div>
+  );
+};
 
 const ToolbarButton = ({ icon: Icon, active, onClick, tooltip }) => (
   <button
