@@ -563,7 +563,8 @@ const BookEditor = () => {
                 setAiPrompt={setAiPrompt}
                 aiLoading={aiLoading}
                 requestAI={requestAI}
-                aiResult={aiResult}
+                aiHistory={aiHistory}
+                clearAiHistory={clearAiHistory}
               />
             </aside>
           )}
