@@ -166,12 +166,28 @@ const BookEditor = () => {
         context: context.slice(0, 2000),
         type,
       });
+      
+      // Add to history with metadata
+      const newEntry = {
+        id: Date.now(),
+        type,
+        prompt: aiPrompt || `Help me with ${type}`,
+        response: res.data.result,
+        timestamp: new Date().toLocaleTimeString(),
+      };
+      setAiHistory(prev => [newEntry, ...prev]);
       setAiResult(res.data.result);
+      setAiPrompt(''); // Clear prompt after successful request
     } catch (err) {
       toast.error('AI request failed');
     } finally {
       setAiLoading(false);
     }
+  };
+
+  const clearAiHistory = () => {
+    setAiHistory([]);
+    setAiResult('');
   };
 
   const chapterTypes = [
