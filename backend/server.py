@@ -373,7 +373,7 @@ async def delete_chapter(chapter_id: str, user: dict = Depends(get_current_user)
     return {"message": "Chapter deleted"}
 
 async def update_book_stats(book_id: str):
-    chapters = await db.chapters.find({"book_id": book_id}, {"_id": 0}).to_list(100)
+    chapters = await db.chapters.find({"book_id": book_id}, {"_id": 0, "word_count": 1}).to_list(100)
     chapter_count = len(chapters)
     word_count = sum(c.get("word_count", 0) for c in chapters)
     
