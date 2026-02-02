@@ -39,6 +39,7 @@ const BookEditor = () => {
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState('');
+  const [aiHistory, setAiHistory] = useState([]);
   const [aiPrompt, setAiPrompt] = useState('');
   const [chapterSidebarOpen, setChapterSidebarOpen] = useState(false);
 
