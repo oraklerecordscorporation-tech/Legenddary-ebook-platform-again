@@ -382,9 +382,9 @@ const CoverDesigner = () => {
       </aside>
 
       {/* Preview */}
-      <main className="flex-1 flex items-center justify-center p-8 bg-[#1A1A1A]">
+      <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-[#1A1A1A]">
         <div
-          className="w-[400px] h-[600px] rounded-lg shadow-2xl overflow-hidden relative"
+          className="w-full max-w-[300px] md:w-[400px] aspect-[2/3] rounded-lg shadow-2xl overflow-hidden relative"
           style={{ backgroundColor: cover.backgroundColor }}
           data-testid="cover-preview"
         >
