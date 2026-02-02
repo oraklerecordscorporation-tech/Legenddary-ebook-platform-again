@@ -305,14 +305,14 @@ const SignatureStudio = () => {
       </aside>
 
       {/* Canvas Area */}
-      <main className="flex-1 flex items-center justify-center p-8 bg-[#1A1A1A]">
-        <div className="bg-[#0A0A0A] rounded-2xl p-8 shadow-2xl">
+      <main className="flex-1 flex items-center justify-center p-4 md:p-8 bg-[#1A1A1A]">
+        <div className="bg-[#0A0A0A] rounded-2xl p-4 md:p-8 shadow-2xl w-full max-w-[650px]">
           <p className="text-sm text-[#E5E5E0]/40 mb-4 text-center">Draw your signature below</p>
           <canvas
             ref={canvasRef}
             width={600}
             height={200}
-            className="signature-canvas rounded-xl bg-white"
+            className="signature-canvas rounded-xl bg-white w-full"
             onMouseDown={startDrawing}
             onMouseMove={draw}
             onMouseUp={stopDrawing}
