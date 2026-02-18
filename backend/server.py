@@ -148,6 +148,22 @@ class ImageResult(BaseModel):
 class ExportRequest(BaseModel):
     book_id: str
     format: str  # pdf, epub
+    print_ready: bool = False
+    paper_size: str = "6x9"  # 6x9, 5.5x8.5, 5x8, 8.5x11
+    include_bleed: bool = False
+
+class VersionResponse(BaseModel):
+    id: str
+    chapter_id: str
+    content: str
+    word_count: int
+    created_at: str
+
+class RoyaltyCalculation(BaseModel):
+    book_price: float
+    page_count: int
+    print_cost: float = 0
+    platform: str = "all"
 
 # ==================== AUTH HELPERS ====================
 
