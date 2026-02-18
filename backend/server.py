@@ -710,6 +710,15 @@ async def search_images(request: ImageSearchRequest, user: dict = Depends(get_cu
 
 # ==================== EXPORT ROUTES ====================
 
+# Paper sizes in points (72 points = 1 inch)
+PAPER_SIZES = {
+    "6x9": (6 * 72, 9 * 72),
+    "5.5x8.5": (5.5 * 72, 8.5 * 72),
+    "5x8": (5 * 72, 8 * 72),
+    "8.5x11": (8.5 * 72, 11 * 72),
+    "a5": (420, 595),
+}
+
 @api_router.post("/export")
 async def export_book(request: ExportRequest, user: dict = Depends(get_current_user)):
     book = await db.books.find_one({"id": request.book_id, "user_id": user["id"]}, {"_id": 0})
@@ -719,11 +728,160 @@ async def export_book(request: ExportRequest, user: dict = Depends(get_current_u
     chapters = await db.chapters.find({"book_id": request.book_id}, {"_id": 0}).sort("order", 1).to_list(100)
     
     if request.format == "pdf":
+        if request.print_ready:
+            return await generate_print_ready_pdf(book, chapters, request.paper_size, request.include_bleed)
         return await generate_pdf(book, chapters)
     elif request.format == "epub":
         return await generate_epub(book, chapters)
     else:
         raise HTTPException(status_code=400, detail="Unsupported format")
+
+async def generate_print_ready_pdf(book: dict, chapters: list, paper_size: str = "6x9", include_bleed: bool = False) -> dict:
+    """Generate a print-ready PDF with proper margins, bleeds, and formatting"""
+    import re
+    
+    base_width, base_height = PAPER_SIZES.get(paper_size, PAPER_SIZES["6x9"])
+    
+    # Add bleed if requested (0.125 inch = 9 points on each side)
+    bleed = 9 if include_bleed else 0
+    width = base_width + (bleed * 2)
+    height = base_height + (bleed * 2)
+    
+    buffer = io.BytesIO()
+    c = pdf_canvas.Canvas(buffer, pagesize=(width, height))
+    
+    # Margins (0.75 inch inside, 0.5 inch outside for book binding)
+    margin_top = 54 + bleed  # 0.75 inch
+    margin_bottom = 54 + bleed
+    margin_inside = 63 + bleed  # 0.875 inch (for binding)
+    margin_outside = 45 + bleed  # 0.625 inch
+    
+    text_width = width - margin_inside - margin_outside
+    text_height = height - margin_top - margin_bottom
+    
+    page_number = 0
+    
+    def draw_page_number(page_num, is_left_page):
+        """Draw page number at bottom of page"""
+        if page_num > 0:  # Don't number title page
+            c.setFont("Helvetica", 10)
+            if is_left_page:
+                c.drawString(margin_inside, margin_bottom - 20, str(page_num))
+            else:
+                c.drawRightString(width - margin_outside, margin_bottom - 20, str(page_num))
+    
+    def draw_trim_marks():
+        """Draw trim marks for print shop"""
+        if include_bleed:
+            c.setStrokeColorRGB(0, 0, 0)
+            c.setLineWidth(0.5)
+            mark_length = 18
+            
+            # Top-left
+            c.line(bleed, height - bleed, bleed, height - bleed - mark_length)
+            c.line(bleed, height - bleed, bleed + mark_length, height - bleed)
+            
+            # Top-right
+            c.line(width - bleed, height - bleed, width - bleed, height - bleed - mark_length)
+            c.line(width - bleed, height - bleed, width - bleed - mark_length, height - bleed)
+            
+            # Bottom-left
+            c.line(bleed, bleed, bleed, bleed + mark_length)
+            c.line(bleed, bleed, bleed + mark_length, bleed)
+            
+            # Bottom-right
+            c.line(width - bleed, bleed, width - bleed, bleed + mark_length)
+            c.line(width - bleed, bleed, width - bleed - mark_length, bleed)
+    
+    # Title page (right-hand page, odd)
+    page_number = 1
+    draw_trim_marks()
+    c.setFont("Helvetica-Bold", 28)
+    c.drawCentredString(width / 2, height - 250, book["title"])
+    
+    if book.get("description"):
+        c.setFont("Helvetica", 14)
+        c.drawCentredString(width / 2, height - 300, book["description"][:80])
+    
+    c.showPage()
+    page_number += 1
+    
+    # Blank page (left-hand, even) - back of title page
+    draw_trim_marks()
+    c.showPage()
+    page_number += 1
+    
+    # Chapters
+    for chapter in chapters:
+        # Chapters start on right-hand (odd) pages
+        if page_number % 2 == 0:
+            draw_trim_marks()
+            c.showPage()
+            page_number += 1
+        
+        is_left_page = (page_number % 2 == 0)
+        margin_left = margin_inside if not is_left_page else margin_outside
+        margin_right = margin_outside if not is_left_page else margin_inside
+        
+        draw_trim_marks()
+        
+        # Chapter title
+        c.setFont("Helvetica-Bold", 20)
+        c.drawCentredString(width / 2, height - margin_top - 50, chapter["title"])
+        
+        # Chapter content
+        c.setFont("Helvetica", 11)
+        y = height - margin_top - 100
+        line_height = 14
+        
+        content = chapter.get("content", "")
+        clean_content = re.sub('<[^<]+?>', ' ', content)
+        clean_content = re.sub(r'\s+', ' ', clean_content).strip()
+        
+        words = clean_content.split()
+        line = ""
+        
+        for word in words:
+            test_line = line + " " + word if line else word
+            if c.stringWidth(test_line, "Helvetica", 11) < text_width:
+                line = test_line
+            else:
+                c.drawString(margin_left, y, line.strip())
+                y -= line_height
+                line = word
+                
+                if y < margin_bottom + 30:
+                    draw_page_number(page_number, is_left_page)
+                    c.showPage()
+                    page_number += 1
+                    is_left_page = (page_number % 2 == 0)
+                    margin_left = margin_inside if not is_left_page else margin_outside
+                    draw_trim_marks()
+                    y = height - margin_top
+        
+        if line:
+            c.drawString(margin_left, y, line.strip())
+        
+        draw_page_number(page_number, is_left_page)
+        c.showPage()
+        page_number += 1
+    
+    c.save()
+    buffer.seek(0)
+    pdf_base64 = base64.b64encode(buffer.read()).decode()
+    
+    return {
+        "format": "pdf",
+        "filename": f"{book['title']}_print_ready.pdf",
+        "data": pdf_base64,
+        "content_type": "application/pdf",
+        "print_info": {
+            "paper_size": paper_size,
+            "includes_bleed": include_bleed,
+            "total_pages": page_number - 1,
+            "bleed_size": "0.125 inch" if include_bleed else "none"
+        }
+    }
 
 async def generate_pdf(book: dict, chapters: list) -> dict:
     buffer = io.BytesIO()
