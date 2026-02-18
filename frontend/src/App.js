@@ -59,6 +59,7 @@ function AppRoutes() {
       <Route path="/export/:bookId" element={<ProtectedRoute><ExportCenter /></ProtectedRoute>} />
       <Route path="/publishing" element={<ProtectedRoute><PublishingGuide /></ProtectedRoute>} />
       <Route path="/marketing" element={<ProtectedRoute><MarketingTips /></ProtectedRoute>} />
+      <Route path="/calculator" element={<ProtectedRoute><RoyaltyCalculator /></ProtectedRoute>} />
     </Routes>
   );
 }
