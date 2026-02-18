@@ -398,6 +398,216 @@ async def update_book_stats(book_id: str):
         {"$set": {"chapter_count": chapter_count, "word_count": word_count, "updated_at": datetime.now(timezone.utc).isoformat()}}
     )
 
+# ==================== VERSION HISTORY ROUTES ====================
+
+@api_router.post("/chapters/{chapter_id}/versions", response_model=VersionResponse)
+async def save_version(chapter_id: str, user: dict = Depends(get_current_user)):
+    """Save current chapter content as a version snapshot"""
+    chapter = await db.chapters.find_one({"id": chapter_id}, {"_id": 0})
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    book = await db.books.find_one({"id": chapter["book_id"], "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    version_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    version = {
+        "id": version_id,
+        "chapter_id": chapter_id,
+        "content": chapter.get("content", ""),
+        "word_count": chapter.get("word_count", 0),
+        "created_at": now
+    }
+    
+    await db.versions.insert_one(version)
+    
+    # Keep only last 20 versions per chapter
+    versions = await db.versions.find({"chapter_id": chapter_id}).sort("created_at", -1).to_list(100)
+    if len(versions) > 20:
+        old_versions = versions[20:]
+        for v in old_versions:
+            await db.versions.delete_one({"id": v["id"]})
+    
+    return VersionResponse(**version)
+
+@api_router.get("/chapters/{chapter_id}/versions", response_model=List[VersionResponse])
+async def get_versions(chapter_id: str, user: dict = Depends(get_current_user)):
+    """Get all saved versions for a chapter"""
+    chapter = await db.chapters.find_one({"id": chapter_id}, {"_id": 0})
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    book = await db.books.find_one({"id": chapter["book_id"], "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    versions = await db.versions.find({"chapter_id": chapter_id}, {"_id": 0}).sort("created_at", -1).to_list(20)
+    return [VersionResponse(**v) for v in versions]
+
+@api_router.post("/chapters/{chapter_id}/versions/{version_id}/restore", response_model=ChapterResponse)
+async def restore_version(chapter_id: str, version_id: str, user: dict = Depends(get_current_user)):
+    """Restore a chapter to a previous version"""
+    chapter = await db.chapters.find_one({"id": chapter_id}, {"_id": 0})
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    
+    book = await db.books.find_one({"id": chapter["book_id"], "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=403, detail="Access denied")
+    
+    version = await db.versions.find_one({"id": version_id, "chapter_id": chapter_id}, {"_id": 0})
+    if not version:
+        raise HTTPException(status_code=404, detail="Version not found")
+    
+    # Save current state before restoring
+    await save_version(chapter_id, user)
+    
+    # Restore the version
+    await db.chapters.update_one(
+        {"id": chapter_id},
+        {"$set": {
+            "content": version["content"],
+            "word_count": version["word_count"],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    
+    await update_book_stats(chapter["book_id"])
+    
+    updated = await db.chapters.find_one({"id": chapter_id}, {"_id": 0})
+    return ChapterResponse(**updated)
+
+# ==================== ROYALTY CALCULATOR ROUTES ====================
+
+@api_router.post("/calculator/royalties")
+async def calculate_royalties(calc: RoyaltyCalculation, user: dict = Depends(get_current_user)):
+    """Calculate royalties across different publishing platforms"""
+    
+    price = calc.book_price
+    pages = calc.page_count
+    
+    # Print cost estimation (approximate)
+    if calc.print_cost > 0:
+        print_cost = calc.print_cost
+    else:
+        # Estimate print cost: base + per page
+        print_cost = 0.85 + (pages * 0.012)  # Approximate KDP print cost
+    
+    platforms = {
+        "amazon_kdp_ebook": {
+            "name": "Amazon KDP (eBook)",
+            "rate": 0.70 if price >= 2.99 and price <= 9.99 else 0.35,
+            "delivery_cost": 0.15 * (pages / 100),  # ~$0.15 per MB
+            "royalty": 0,
+            "notes": "70% royalty for $2.99-$9.99, 35% otherwise"
+        },
+        "amazon_kdp_print": {
+            "name": "Amazon KDP (Paperback)",
+            "rate": 0.60,
+            "print_cost": print_cost,
+            "royalty": 0,
+            "notes": "60% of list price minus print cost"
+        },
+        "apple_books": {
+            "name": "Apple Books",
+            "rate": 0.70,
+            "royalty": 0,
+            "notes": "70% royalty on all prices"
+        },
+        "barnes_noble": {
+            "name": "Barnes & Noble Press",
+            "rate": 0.65,
+            "royalty": 0,
+            "notes": "65% royalty for most prices"
+        },
+        "kobo": {
+            "name": "Kobo Writing Life",
+            "rate": 0.70 if price >= 2.99 else 0.45,
+            "royalty": 0,
+            "notes": "70% for $2.99+, 45% below"
+        },
+        "google_play": {
+            "name": "Google Play Books",
+            "rate": 0.70,
+            "royalty": 0,
+            "notes": "70% royalty standard"
+        },
+        "smashwords": {
+            "name": "Smashwords",
+            "rate": 0.80,
+            "royalty": 0,
+            "notes": "80% on direct sales, 60% on retail partners"
+        },
+        "draft2digital": {
+            "name": "Draft2Digital",
+            "rate": 0.60,
+            "royalty": 0,
+            "notes": "~60% after retailer cut"
+        },
+        "ingramspark": {
+            "name": "IngramSpark (Print)",
+            "rate": 0.55,
+            "print_cost": print_cost * 1.1,  # Slightly higher
+            "royalty": 0,
+            "notes": "55% wholesale discount typical"
+        },
+        "lulu": {
+            "name": "Lulu (Print)",
+            "rate": 0.80,
+            "print_cost": print_cost * 1.2,
+            "royalty": 0,
+            "notes": "80% of profit (price - print cost)"
+        }
+    }
+    
+    for key, platform in platforms.items():
+        if "print_cost" in platform:
+            # Print book royalty
+            profit = price - platform["print_cost"]
+            platform["royalty"] = round(max(0, profit * platform["rate"]), 2)
+            platform["print_cost"] = round(platform["print_cost"], 2)
+        else:
+            # eBook royalty
+            if "delivery_cost" in platform:
+                platform["royalty"] = round(max(0, (price * platform["rate"]) - platform.get("delivery_cost", 0)), 2)
+            else:
+                platform["royalty"] = round(price * platform["rate"], 2)
+    
+    # Calculate monthly/yearly projections
+    projections = {
+        "per_sale": platforms,
+        "monthly_100_sales": {k: round(v["royalty"] * 100, 2) for k, v in platforms.items()},
+        "monthly_500_sales": {k: round(v["royalty"] * 500, 2) for k, v in platforms.items()},
+        "yearly_1000_sales": {k: round(v["royalty"] * 1000, 2) for k, v in platforms.items()},
+    }
+    
+    return {
+        "input": {
+            "book_price": price,
+            "page_count": pages,
+            "estimated_print_cost": round(print_cost, 2)
+        },
+        "platforms": platforms,
+        "projections": projections,
+        "recommendation": get_royalty_recommendation(platforms, price)
+    }
+
+def get_royalty_recommendation(platforms: dict, price: float) -> str:
+    """Generate a recommendation based on royalty calculations"""
+    best_ebook = max(
+        [(k, v) for k, v in platforms.items() if "print_cost" not in v],
+        key=lambda x: x[1]["royalty"]
+    )
+    best_print = max(
+        [(k, v) for k, v in platforms.items() if "print_cost" in v],
+        key=lambda x: x[1]["royalty"]
+    )
+    
+    return f"For eBooks, {best_ebook[1]['name']} offers the highest royalty at ${best_ebook[1]['royalty']}/sale. For print, {best_print[1]['name']} is best at ${best_print[1]['royalty']}/sale. Consider pricing between $2.99-$9.99 for maximum eBook royalties."
+
 # ==================== SIGNATURE ROUTES ====================
 
 @api_router.post("/signatures", response_model=SignatureResponse)
