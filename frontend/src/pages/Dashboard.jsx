@@ -90,6 +90,7 @@ const Dashboard = () => {
     { icon: FileText, label: 'Dashboard', path: '/dashboard', active: true },
     { icon: Image, label: 'Image Finder', path: '/images' },
     { icon: PenTool, label: 'Signature Studio', path: '/signature' },
+    { icon: Calculator, label: 'Royalty Calculator', path: '/calculator' },
     { icon: Share2, label: 'Publishing', path: '/publishing' },
     { icon: TrendingUp, label: 'Marketing', path: '/marketing' },
   ];
