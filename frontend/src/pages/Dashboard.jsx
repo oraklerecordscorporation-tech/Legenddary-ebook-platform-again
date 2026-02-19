@@ -88,6 +88,7 @@ const Dashboard = () => {
 
   const navItems = [
     { icon: FileText, label: 'Dashboard', path: '/dashboard', active: true },
+    { icon: BookMarked, label: 'Templates', path: '/templates' },
     { icon: Image, label: 'Image Finder', path: '/images' },
     { icon: PenTool, label: 'Signature Studio', path: '/signature' },
     { icon: Calculator, label: 'Royalty Calculator', path: '/calculator' },
