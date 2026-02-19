@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
 import { 
   BookOpen, Plus, LogOut, FileText, Image, PenTool, 
   Share2, TrendingUp, Search, MoreVertical,
-  Edit, Trash2, Palette, Clock, BarChart3, Menu, Calculator
+  Edit, Trash2, Palette, Clock, BarChart3, Menu, Calculator, BookMarked
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import axios from 'axios';
