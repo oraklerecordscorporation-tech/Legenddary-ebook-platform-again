@@ -12,6 +12,7 @@ import ExportCenter from "./pages/ExportCenter";
 import PublishingGuide from "./pages/PublishingGuide";
 import MarketingTips from "./pages/MarketingTips";
 import RoyaltyCalculator from "./pages/RoyaltyCalculator";
+import BookTemplates from "./pages/BookTemplates";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
