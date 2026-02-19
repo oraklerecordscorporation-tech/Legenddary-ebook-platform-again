@@ -221,6 +221,122 @@ const BookEditor = () => {
     }
   };
 
+  // ==================== TEXT-TO-SPEECH FUNCTIONS ====================
+  
+  const speakText = () => {
+    const text = editor?.getText() || '';
+    if (!text.trim()) {
+      toast.error('No content to read');
+      return;
+    }
+    
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = speechRate;
+    utterance.voice = selectedVoice;
+    
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+      setIsPaused(false);
+    };
+    
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+    };
+    
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setIsPaused(false);
+      toast.error('Speech synthesis error');
+    };
+    
+    window.speechSynthesis.speak(utterance);
+    toast.success('Reading your content...');
+  };
+  
+  const pauseSpeech = () => {
+    if (isSpeaking && !isPaused) {
+      window.speechSynthesis.pause();
+      setIsPaused(true);
+    }
+  };
+  
+  const resumeSpeech = () => {
+    if (isPaused) {
+      window.speechSynthesis.resume();
+      setIsPaused(false);
+    }
+  };
+  
+  const stopSpeech = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+    setIsPaused(false);
+  };
+
+  // ==================== VERSION HISTORY FUNCTIONS ====================
+  
+  const saveVersion = async () => {
+    if (!activeChapter) return;
+    try {
+      await axios.post(`${API}/chapters/${activeChapter.id}/versions`);
+      toast.success('Version saved!');
+      fetchVersions();
+    } catch (err) {
+      toast.error('Failed to save version');
+    }
+  };
+  
+  const fetchVersions = async () => {
+    if (!activeChapter) return;
+    setVersionsLoading(true);
+    try {
+      const res = await axios.get(`${API}/chapters/${activeChapter.id}/versions`);
+      setVersions(res.data);
+    } catch (err) {
+      console.error('Failed to fetch versions');
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
+  
+  const restoreVersion = async (versionId) => {
+    if (!window.confirm('Restore this version? Your current content will be saved first.')) return;
+    try {
+      const res = await axios.post(`${API}/chapters/${activeChapter.id}/versions/${versionId}/restore`);
+      setActiveChapter(res.data);
+      editor?.commands.setContent(res.data.content || '');
+      setHistoryDialogOpen(false);
+      toast.success('Version restored!');
+      fetchVersions();
+    } catch (err) {
+      toast.error('Failed to restore version');
+    }
+  };
+
+  // Auto-save version every 5 minutes
+  useEffect(() => {
+    if (!activeChapter) return;
+    
+    const interval = setInterval(() => {
+      if (editor?.getText()?.trim()) {
+        saveVersion();
+      }
+    }, 5 * 60 * 1000); // 5 minutes
+    
+    return () => clearInterval(interval);
+  }, [activeChapter?.id]);
+
+  // Fetch versions when chapter changes
+  useEffect(() => {
+    if (activeChapter) {
+      fetchVersions();
+    }
+  }, [activeChapter?.id]);
+
   const requestAI = async (type) => {
     setAiLoading(true);
     try {
