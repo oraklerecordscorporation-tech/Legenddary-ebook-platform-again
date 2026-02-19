@@ -61,6 +61,7 @@ function AppRoutes() {
       <Route path="/publishing" element={<ProtectedRoute><PublishingGuide /></ProtectedRoute>} />
       <Route path="/marketing" element={<ProtectedRoute><MarketingTips /></ProtectedRoute>} />
       <Route path="/calculator" element={<ProtectedRoute><RoyaltyCalculator /></ProtectedRoute>} />
+      <Route path="/templates" element={<ProtectedRoute><BookTemplates /></ProtectedRoute>} />
     </Routes>
   );
 }
