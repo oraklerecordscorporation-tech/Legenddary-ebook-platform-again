@@ -65,6 +65,39 @@ const BookEditor = () => {
   const [imageLoading, setImageLoading] = useState(false);
   const [splitDialogOpen, setSplitDialogOpen] = useState(false);
   const [splitMarker, setSplitMarker] = useState('Chapter');
+  
+  // Text-to-Speech state
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
+  const [speechRate, setSpeechRate] = useState(1);
+  const [selectedVoice, setSelectedVoice] = useState(null);
+  const [voices, setVoices] = useState([]);
+  const [ttsDialogOpen, setTtsDialogOpen] = useState(false);
+  
+  // Version History state
+  const [versions, setVersions] = useState([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+
+  // Load available voices
+  useEffect(() => {
+    const loadVoices = () => {
+      const availableVoices = window.speechSynthesis.getVoices();
+      if (availableVoices.length > 0) {
+        setVoices(availableVoices);
+        // Default to first English voice
+        const englishVoice = availableVoices.find(v => v.lang.startsWith('en')) || availableVoices[0];
+        setSelectedVoice(englishVoice);
+      }
+    };
+    
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
 
   const editor = useEditor({
     extensions: [
