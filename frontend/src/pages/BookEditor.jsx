@@ -19,8 +19,10 @@ import {
   Bold, Italic, UnderlineIcon, AlignLeft, AlignCenter, AlignRight,
   List, ListOrdered, Quote, Heading1, Heading2, RotateCcw, RotateCw,
   FileText, Lightbulb, Loader2, ChevronDown, Menu, Save, Image,
-  SplitSquareHorizontal, CheckCircle, Hash
+  SplitSquareHorizontal, CheckCircle, Hash, Play, Pause, Square, Volume2,
+  History, RotateCcw as Restore
 } from 'lucide-react';
+import { Slider } from '../components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
 import axios from 'axios';
 import { toast } from 'sonner';
