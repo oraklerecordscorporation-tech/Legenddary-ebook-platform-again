@@ -778,6 +778,160 @@ const BookEditor = () => {
             SAVE
           </Button>
 
+          {/* Text-to-Speech Button */}
+          <Dialog open={ttsDialogOpen} onOpenChange={setTtsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button
+                className={`hidden md:flex h-10 px-4 text-base font-semibold ${isSpeaking ? 'bg-blue-600 text-white' : 'bg-blue-600/20 text-blue-600 hover:bg-blue-600/30'}`}
+                data-testid="tts-btn"
+              >
+                <Volume2 className="w-5 h-5 mr-2" />
+                {isSpeaking ? (isPaused ? 'Paused' : 'Playing') : 'Listen'}
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1A1A1A] border-white/10 text-[#F5F5F0]">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  <Volume2 className="w-6 h-6 text-blue-400" />
+                  Text-to-Speech
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-6 mt-4">
+                {/* Playback Controls */}
+                <div className="flex items-center justify-center gap-4">
+                  {!isSpeaking ? (
+                    <Button onClick={speakText} className="bg-blue-600 hover:bg-blue-700 text-white h-14 px-8 text-lg font-semibold" data-testid="tts-play">
+                      <Play className="w-6 h-6 mr-2" />
+                      PLAY
+                    </Button>
+                  ) : (
+                    <>
+                      <Button onClick={isPaused ? resumeSpeech : pauseSpeech} className="bg-yellow-600 hover:bg-yellow-700 text-white h-14 px-6" data-testid="tts-pause">
+                        {isPaused ? <Play className="w-6 h-6" /> : <Pause className="w-6 h-6" />}
+                      </Button>
+                      <Button onClick={stopSpeech} className="bg-red-600 hover:bg-red-700 text-white h-14 px-6" data-testid="tts-stop">
+                        <Square className="w-6 h-6" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                {/* Speed Control */}
+                <div className="space-y-2">
+                  <Label className="text-base">Speed: {speechRate}x</Label>
+                  <Slider
+                    value={[speechRate]}
+                    onValueChange={([v]) => setSpeechRate(v)}
+                    min={0.5}
+                    max={2}
+                    step={0.25}
+                    className="py-4"
+                    disabled={isSpeaking}
+                  />
+                  <div className="flex justify-between text-xs text-[#E5E5E0]/40">
+                    <span>0.5x (Slow)</span>
+                    <span>1x (Normal)</span>
+                    <span>2x (Fast)</span>
+                  </div>
+                </div>
+
+                {/* Voice Selection */}
+                <div className="space-y-2">
+                  <Label className="text-base">Voice</Label>
+                  <Select 
+                    value={selectedVoice?.name || ''} 
+                    onValueChange={(name) => setSelectedVoice(voices.find(v => v.name === name))}
+                    disabled={isSpeaking}
+                  >
+                    <SelectTrigger className="bg-white/5 border-white/10 h-12">
+                      <SelectValue placeholder="Select a voice" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#1A1A1A] border-white/10 max-h-[200px]">
+                      {voices.map((voice) => (
+                        <SelectItem key={voice.name} value={voice.name}>
+                          {voice.name} ({voice.lang})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <p className="text-sm text-[#E5E5E0]/50 text-center">
+                  Tip: Listening to your writing helps catch awkward sentences
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Version History Button */}
+          <Dialog open={historyDialogOpen} onOpenChange={(open) => { setHistoryDialogOpen(open); if (open) fetchVersions(); }}>
+            <DialogTrigger asChild>
+              <Button
+                className="hidden md:flex h-10 px-4 text-base font-semibold bg-purple-600/20 text-purple-400 hover:bg-purple-600/30"
+                disabled={!activeChapter}
+                data-testid="history-btn"
+              >
+                <History className="w-5 h-5 mr-2" />
+                History
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-[#1A1A1A] border-white/10 text-[#F5F5F0] max-w-lg">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2" style={{ fontFamily: 'Playfair Display, serif' }}>
+                  <History className="w-6 h-6 text-purple-400" />
+                  Version History
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 mt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-[#E5E5E0]/60">Auto-saved every 5 minutes</p>
+                  <Button onClick={saveVersion} variant="outline" size="sm" className="border-white/10">
+                    <Save className="w-4 h-4 mr-1" />
+                    Save Now
+                  </Button>
+                </div>
+                
+                <ScrollArea className="h-[300px]">
+                  {versionsLoading ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-purple-400" />
+                    </div>
+                  ) : versions.length === 0 ? (
+                    <div className="text-center py-8">
+                      <History className="w-10 h-10 mx-auto mb-3 text-[#E5E5E0]/20" />
+                      <p className="text-[#E5E5E0]/40">No saved versions yet</p>
+                      <p className="text-xs text-[#E5E5E0]/30 mt-1">Versions are auto-saved every 5 minutes</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {versions.map((version, i) => (
+                        <div key={version.id} className="p-3 rounded-lg bg-white/5 border border-white/10 flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium">
+                              {i === 0 ? 'Latest Version' : `Version ${versions.length - i}`}
+                            </p>
+                            <p className="text-xs text-[#E5E5E0]/50">
+                              {new Date(version.created_at).toLocaleString()} • {version.word_count} words
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={() => restoreVersion(version.id)}
+                            variant="outline"
+                            size="sm"
+                            className="border-purple-500/30 text-purple-400 hover:bg-purple-500/10"
+                          >
+                            <Restore className="w-4 h-4 mr-1" />
+                            Restore
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              </div>
+            </DialogContent>
+          </Dialog>
+
           {/* AI Button */}
           <Button
             onClick={() => setAiPanelOpen(!aiPanelOpen)}
@@ -785,7 +939,7 @@ const BookEditor = () => {
             data-testid="toggle-ai-panel"
           >
             <Sparkles className="w-5 h-5 mr-2" />
-            AI Assistant
+            AI
           </Button>
         </div>
 
