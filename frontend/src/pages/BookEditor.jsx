@@ -1003,11 +1003,11 @@ const BookEditor = () => {
 
         {/* Editor Content */}
         <div className="flex-1 flex overflow-hidden">
-          <div className="flex-1 overflow-y-auto bg-[#F9F9F7]">
+          <div className={`flex-1 overflow-y-auto ${isFocusMode ? 'bg-[#EFEDE6]' : 'bg-[#F9F9F7]'}`}>
             {activeChapter ? (
-              <div className="max-w-3xl mx-auto py-4 md:py-8">
+              <div className={`${isFocusMode ? 'max-w-4xl mx-auto py-8 md:py-12' : 'max-w-3xl mx-auto py-4 md:py-8'}`}>
                 {/* Section Header */}
-                <div className="px-4 md:px-8 mb-4">
+                <div className={`${isFocusMode ? 'px-5 md:px-10 mb-3' : 'px-4 md:px-8 mb-4'}`}>
                   <div className="flex items-center gap-2 text-sm text-[#1A1A1A]/50 mb-2">
                     <span className="uppercase tracking-wider">{SECTION_TYPES.find(s => s.value === activeChapter.type)?.label || activeChapter.type}</span>
                     {activeChapter.type === 'chapter' && (
@@ -1040,7 +1040,7 @@ const BookEditor = () => {
           </div>
 
           {/* Desktop AI Panel */}
-          {aiPanelOpen && (
+          {aiPanelOpen && !isFocusMode && (
             <aside className="hidden md:flex w-96 bg-[#0A0A0A] text-[#F5F5F0] border-l border-white/5 flex-col" data-testid="ai-panel">
               <AIPanel 
                 aiPrompt={aiPrompt}
