@@ -947,3 +947,140 @@ async def detect_structure(data: dict, user: dict = Depends(get_current_user)):
     split_by = data.get("split_by", "chapter")
     chapters = smart_split_content(content, split_by)
     return {"chapters": chapters, "count": len(chapters)}
+
+# ==================== BATCH IMPORT & URL IMPORT ====================
+import aiohttp
+from bs4 import BeautifulSoup
+
+@api_router.post("/import/batch")
+async def batch_import(files: List[UploadFile] = File(...), user: dict = Depends(get_current_user)):
+    """Import multiple .docx files at once"""
+    results = []
+    for i, file in enumerate(files):
+        if not file.filename.endswith('.docx'):
+            results.append({"filename": file.filename, "status": "skipped", "reason": "Not a .docx file"})
+            continue
+        try:
+            content = await file.read()
+            sections = parse_docx(content)
+            results.append({"filename": file.filename, "status": "success", "sections": sections, "order": i})
+        except Exception as e:
+            results.append({"filename": file.filename, "status": "error", "reason": str(e)})
+    return {"results": results, "total": len(results)}
+
+@api_router.post("/import/url")
+async def import_from_url(data: dict, user: dict = Depends(get_current_user)):
+    """Import content from a URL (Google Docs, web pages)"""
+    url = data.get("url", "")
+    if not url:
+        raise HTTPException(status_code=400, detail="URL required")
+    
+    try:
+        # Handle Google Docs export
+        if "docs.google.com" in url:
+            doc_id = re.search(r'/d/([a-zA-Z0-9-_]+)', url)
+            if doc_id:
+                url = f"https://docs.google.com/document/d/{doc_id.group(1)}/export?format=txt"
+        
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url, timeout=30) as resp:
+                if resp.status != 200:
+                    raise HTTPException(status_code=400, detail="Could not fetch URL")
+                
+                content_type = resp.headers.get('content-type', '')
+                content = await resp.read()
+                
+                if 'html' in content_type:
+                    soup = BeautifulSoup(content, 'html.parser')
+                    for tag in soup(['script', 'style', 'nav', 'header', 'footer']):
+                        tag.decompose()
+                    text = soup.get_text(separator='\n')
+                    sections = smart_split_content(text, "chapter")
+                else:
+                    text = content.decode('utf-8', errors='ignore')
+                    sections = smart_split_content(text, "chapter")
+                
+                return {"sections": sections, "count": len(sections), "source": url}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
+
+@api_router.post("/import/smart-paste")
+async def smart_paste(data: dict, user: dict = Depends(get_current_user)):
+    """Clean up pasted content from Word, web, Google Docs"""
+    content = data.get("content", "")
+    if not content:
+        raise HTTPException(status_code=400, detail="Content required")
+    
+    # Remove Word-specific junk
+    content = re.sub(r'<o:p>.*?</o:p>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<!--.*?-->', '', content, flags=re.DOTALL)
+    content = re.sub(r'<!\[if.*?\]>.*?<!\[endif\]>', '', content, flags=re.DOTALL)
+    content = re.sub(r'class="[^"]*Mso[^"]*"', '', content)
+    content = re.sub(r'style="[^"]*mso-[^"]*"', '', content)
+    
+    # Clean up common formatting issues
+    content = re.sub(r'<span[^>]*>\s*</span>', '', content)
+    content = re.sub(r'<p[^>]*>\s*</p>', '', content)
+    content = re.sub(r'\s+', ' ', content)
+    
+    # Convert plain text line breaks to paragraphs if no HTML
+    if '<p>' not in content and '<div>' not in content:
+        paragraphs = content.split('\n\n')
+        content = ''.join([f'<p>{p.strip()}</p>' for p in paragraphs if p.strip()])
+    
+    # Detect structure
+    analysis = analyze_content_structure(content)
+    
+    return {"cleaned": content, "analysis": analysis}
+
+@api_router.put("/books/{book_id}/reorder-chapters")
+async def reorder_chapters(book_id: str, chapter_order: List[str], user: dict = Depends(get_current_user)):
+    """Reorder chapters by providing list of chapter IDs in new order"""
+    book = await db.books.find_one({"id": book_id, "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    for i, chapter_id in enumerate(chapter_order):
+        await db.chapters.update_one(
+            {"id": chapter_id, "book_id": book_id},
+            {"$set": {"order": i * 10, "updated_at": datetime.now(timezone.utc).isoformat()}}
+        )
+    
+    return {"reordered": len(chapter_order)}
+
+@api_router.post("/books/{book_id}/batch-import")
+async def batch_import_to_book(book_id: str, files: List[UploadFile] = File(...), user: dict = Depends(get_current_user)):
+    """Import multiple files directly into a book"""
+    book = await db.books.find_one({"id": book_id, "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    
+    existing = await db.chapters.count_documents({"book_id": book_id})
+    created = []
+    
+    for file_idx, file in enumerate(files):
+        if not file.filename.endswith('.docx'):
+            continue
+        try:
+            content = await file.read()
+            sections = parse_docx(content)
+            
+            for sec_idx, section in enumerate(sections):
+                chapter_id = str(uuid.uuid4())
+                now = datetime.now(timezone.utc).isoformat()
+                order = (existing + file_idx * 100 + sec_idx) * 10
+                
+                chapter = {
+                    "id": chapter_id, "book_id": book_id,
+                    "title": section["title"], "content": section["content"],
+                    "type": section["type"], "order": order,
+                    "word_count": len(section["content"].split()),
+                    "tags": [], "created_at": now, "updated_at": now
+                }
+                await db.chapters.insert_one(chapter)
+                created.append({"id": chapter_id, "title": section["title"]})
+        except Exception as e:
+            logger.error(f"Batch import error: {e}")
+    
+    await update_book_stats(book_id)
+    return {"imported": len(created), "chapters": created}
