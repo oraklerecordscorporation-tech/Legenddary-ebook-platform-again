@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
 import { 
   BookOpen, Plus, LogOut, FileText, Image, PenTool, 
   Share2, TrendingUp, Search, MoreVertical,
-  Edit, Trash2, Palette, Clock, BarChart3, Menu, Calculator, BookMarked, Upload
+  Edit, Trash2, Palette, Clock, BarChart3, Menu, Calculator, BookMarked, Upload, WandSparkles
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import axios from 'axios';
@@ -88,6 +88,7 @@ const Dashboard = () => {
 
   const navItems = [
     { icon: FileText, label: 'Dashboard', path: '/dashboard', active: true },
+    { icon: WandSparkles, label: 'Idea Wizard', path: '/idea-wizard' },
     { icon: Upload, label: 'Import Center', path: '/import' },
     { icon: BookMarked, label: 'Templates', path: '/templates' },
     { icon: Image, label: 'Image Finder', path: '/images' },
@@ -178,14 +179,25 @@ const Dashboard = () => {
           </div>
           <span className="text-lg font-bold" style={{ fontFamily: 'Playfair Display, serif' }}>Legenddary</span>
         </Link>
-        
-        <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="icon" className="gold-shimmer text-[#0A0A0A]" data-testid="mobile-create-book-btn">
-              <Plus className="w-5 h-5" />
-            </Button>
-          </DialogTrigger>
-        </Dialog>
+
+        <div className="flex items-center gap-2">
+          <Button
+            size="icon"
+            variant="outline"
+            className="border-[#D4AF37]/40 text-[#D4AF37]"
+            onClick={() => navigate('/idea-wizard')}
+            data-testid="mobile-start-from-idea-btn"
+          >
+            <WandSparkles className="w-5 h-5" />
+          </Button>
+          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+            <DialogTrigger asChild>
+              <Button size="icon" className="gold-shimmer text-[#0A0A0A]" data-testid="mobile-create-book-btn">
+                <Plus className="w-5 h-5" />
+              </Button>
+            </DialogTrigger>
+          </Dialog>
+        </div>
       </div>
 
       {/* Desktop Sidebar */}
@@ -205,79 +217,91 @@ const Dashboard = () => {
               <p className="text-[#E5E5E0]/60 mt-1 text-sm md:text-base">Continue your writing journey</p>
             </div>
             
-            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-              <DialogTrigger asChild>
-                <Button className="hidden md:flex gold-shimmer text-[#0A0A0A] hover:opacity-90 rounded-full px-6 glow-gold" data-testid="create-book-btn">
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Book
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="bg-[#1A1A1A] border-white/10 text-[#F5F5F0] mx-4 max-w-md">
-                <DialogHeader>
-                  <DialogTitle style={{ fontFamily: 'Playfair Display, serif' }}>Create New Book</DialogTitle>
-                  <DialogDescription className="text-[#E5E5E0]/70" data-testid="create-book-dialog-description">
-                    Enter the basic details to start your new writing project.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input
-                      placeholder="My Amazing Book"
-                      value={newBook.title}
-                      onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
-                      className="bg-white/5 border-white/10 focus:border-[#D4AF37]"
-                      data-testid="new-book-title"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Textarea
-                      placeholder="A brief description of your book..."
-                      value={newBook.description}
-                      onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
-                      className="bg-white/5 border-white/10 focus:border-[#D4AF37] min-h-[100px]"
-                      data-testid="new-book-description"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Genre</Label>
-                    <Select value={newBook.genre} onValueChange={(v) => setNewBook({ ...newBook, genre: v })}>
-                      <SelectTrigger className="bg-white/5 border-white/10" data-testid="new-book-genre">
-                        <SelectValue placeholder="Select genre" />
-                      </SelectTrigger>
-                      <SelectContent
-                        position="item-aligned"
-                        className="max-h-64 bg-[#141414] border-[#D4AF37]/30 overflow-y-auto scrollbar-thin scrollbar-thumb-[#D4AF37]/60 scrollbar-track-white/10"
-                        data-testid="new-book-genre-options"
-                      >
-                        {genres.map((genre) => (
-                          <SelectItem
-                            key={genre}
-                            value={genre}
-                            className="text-[#F5F5F0] data-[highlighted]:bg-[#D4AF37]/20 data-[highlighted]:text-[#F5F5F0] data-[state=checked]:bg-[#D4AF37]/30 data-[state=checked]:text-[#D4AF37]"
-                            data-testid={`new-book-genre-option-${genre.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
-                          >
-                            {genre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <p className="text-xs text-[#E5E5E0]/55" data-testid="new-book-genre-scroll-hint">
-                      Scroll to view all genres. Hover and selected items are highlighted.
-                    </p>
-                  </div>
-                  <Button 
-                    onClick={createBook} 
-                    className="w-full gold-shimmer text-[#0A0A0A] hover:opacity-90 rounded-full"
-                    disabled={!newBook.title}
-                    data-testid="submit-create-book"
-                  >
-                    Create Book
+            <div className="flex flex-wrap items-center gap-3">
+              <Button
+                variant="outline"
+                className="hidden md:flex border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10 rounded-full px-6"
+                onClick={() => navigate('/idea-wizard')}
+                data-testid="start-from-idea-btn"
+              >
+                <WandSparkles className="w-4 h-4 mr-2" />
+                Start from Idea
+              </Button>
+
+              <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                <DialogTrigger asChild>
+                  <Button className="hidden md:flex gold-shimmer text-[#0A0A0A] hover:opacity-90 rounded-full px-6 glow-gold" data-testid="create-book-btn">
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Book
                   </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogTrigger>
+                <DialogContent className="bg-[#1A1A1A] border-white/10 text-[#F5F5F0] mx-4 max-w-md">
+                  <DialogHeader>
+                    <DialogTitle style={{ fontFamily: 'Playfair Display, serif' }}>Create New Book</DialogTitle>
+                    <DialogDescription className="text-[#E5E5E0]/70" data-testid="create-book-dialog-description">
+                      Enter the basic details to start your new writing project.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    <div className="space-y-2">
+                      <Label>Title</Label>
+                      <Input
+                        placeholder="My Amazing Book"
+                        value={newBook.title}
+                        onChange={(e) => setNewBook({ ...newBook, title: e.target.value })}
+                        className="bg-white/5 border-white/10 focus:border-[#D4AF37]"
+                        data-testid="new-book-title"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Description</Label>
+                      <Textarea
+                        placeholder="A brief description of your book..."
+                        value={newBook.description}
+                        onChange={(e) => setNewBook({ ...newBook, description: e.target.value })}
+                        className="bg-white/5 border-white/10 focus:border-[#D4AF37] min-h-[100px]"
+                        data-testid="new-book-description"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Genre</Label>
+                      <Select value={newBook.genre} onValueChange={(v) => setNewBook({ ...newBook, genre: v })}>
+                        <SelectTrigger className="bg-white/5 border-white/10" data-testid="new-book-genre">
+                          <SelectValue placeholder="Select genre" />
+                        </SelectTrigger>
+                        <SelectContent
+                          position="item-aligned"
+                          className="max-h-64 bg-[#141414] border-[#D4AF37]/30 overflow-y-auto scrollbar-thin scrollbar-thumb-[#D4AF37]/60 scrollbar-track-white/10"
+                          data-testid="new-book-genre-options"
+                        >
+                          {genres.map((genre) => (
+                            <SelectItem
+                              key={genre}
+                              value={genre}
+                              className="text-[#F5F5F0] data-[highlighted]:bg-[#D4AF37]/20 data-[highlighted]:text-[#F5F5F0] data-[state=checked]:bg-[#D4AF37]/30 data-[state=checked]:text-[#D4AF37]"
+                              data-testid={`new-book-genre-option-${genre.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                            >
+                              {genre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-[#E5E5E0]/55" data-testid="new-book-genre-scroll-hint">
+                        Scroll to view all genres. Hover and selected items are highlighted.
+                      </p>
+                    </div>
+                    <Button 
+                      onClick={createBook} 
+                      className="w-full gold-shimmer text-[#0A0A0A] hover:opacity-90 rounded-full"
+                      disabled={!newBook.title}
+                      data-testid="submit-create-book"
+                    >
+                      Create Book
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
 
           {/* Stats */}
@@ -352,10 +376,21 @@ const Dashboard = () => {
                 {searchQuery ? 'Try a different search term' : 'Start writing your first masterpiece'}
               </p>
               {!searchQuery && (
-                <Button onClick={() => setIsCreateOpen(true)} className="gold-shimmer text-[#0A0A0A] rounded-full px-6" data-testid="create-first-book-btn">
-                  <Plus className="w-4 h-4 mr-2" />
-                  Create Your First Book
-                </Button>
+                <div className="flex flex-wrap justify-center gap-3">
+                  <Button onClick={() => setIsCreateOpen(true)} className="gold-shimmer text-[#0A0A0A] rounded-full px-6" data-testid="create-first-book-btn">
+                    <Plus className="w-4 h-4 mr-2" />
+                    Create Your First Book
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/idea-wizard')}
+                    className="rounded-full px-6 border-[#D4AF37]/40 text-[#D4AF37] hover:bg-[#D4AF37]/10"
+                    data-testid="create-first-book-from-idea-btn"
+                  >
+                    <WandSparkles className="w-4 h-4 mr-2" />
+                    Start from Idea
+                  </Button>
+                </div>
               )}
             </div>
           ) : (
