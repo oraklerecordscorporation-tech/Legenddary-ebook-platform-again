@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -19,7 +19,7 @@ import {
   List, ListOrdered, Quote, Heading1, Heading2, RotateCcw, RotateCw,
   FileText, Lightbulb, Loader2, ChevronDown, Menu, Save, Image,
   SplitSquareHorizontal, CheckCircle, Hash, Play, Pause, Square, Volume2,
-  History, RotateCcw as Restore
+  History, RotateCcw as Restore, WandSparkles, Minimize2
 } from 'lucide-react';
 import { Slider } from '../components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
@@ -47,6 +47,7 @@ const SECTION_TYPES = [
 const BookEditor = () => {
   const { bookId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [book, setBook] = useState(null);
   const [chapters, setChapters] = useState([]);
   const [activeChapter, setActiveChapter] = useState(null);
@@ -77,6 +78,16 @@ const BookEditor = () => {
   const [versions, setVersions] = useState([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+
+  useEffect(() => {
+    const shouldEnableFocus = ['1', 'true'].includes((searchParams.get('focus') || '').toLowerCase());
+    if (shouldEnableFocus) {
+      setIsFocusMode(true);
+      setAiPanelOpen(false);
+      setChapterSidebarOpen(false);
+    }
+  }, [searchParams]);
 
   // Load available voices
   useEffect(() => {
@@ -428,6 +439,24 @@ const BookEditor = () => {
 
   const clearAiHistory = () => {
     setAiHistory([]);
+  };
+
+  const toggleFocusMode = () => {
+    const nextFocusState = !isFocusMode;
+    setIsFocusMode(nextFocusState);
+
+    if (nextFocusState) {
+      setAiPanelOpen(false);
+      setChapterSidebarOpen(false);
+    }
+
+    const updated = new URLSearchParams(searchParams.toString());
+    if (nextFocusState) {
+      updated.set('focus', '1');
+    } else {
+      updated.delete('focus');
+    }
+    setSearchParams(updated, { replace: true });
   };
 
   const getPageNumber = (chapter) => {
