@@ -13,6 +13,8 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 import os
 import logging
+import json
+import html
 from pathlib import Path
 from pydantic import BaseModel, Field, EmailStr
 from typing import List, Optional
@@ -170,6 +172,23 @@ class AIRequest(BaseModel):
 class AIResponse(BaseModel):
     result: str
     type: str
+
+
+class IdeaWizardRequest(BaseModel):
+    idea: str
+    genre: str
+    tone: str
+    audience: str
+    chapter_count: int = Field(default=8, ge=3, le=20)
+    title_hint: Optional[str] = ""
+
+
+class IdeaWizardResponse(BaseModel):
+    book_id: str
+    title: str
+    chapter_count: int
+    outline: List[str]
+    first_chapter_id: str
 
 class ImageSearchRequest(BaseModel):
     query: str
@@ -635,6 +654,56 @@ async def delete_signature(sig_id: str, user: dict = Depends(get_current_user)):
 
 # ==================== AI ROUTES (Rate Limited) ====================
 
+
+def _extract_json_from_text(raw_text: str) -> Optional[dict]:
+    if not raw_text:
+        return None
+
+    cleaned = raw_text.strip()
+    if cleaned.startswith("```"):
+        cleaned = re.sub(r"^```(?:json)?", "", cleaned).strip()
+        cleaned = re.sub(r"```$", "", cleaned).strip()
+
+    if not cleaned.startswith("{"):
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start != -1 and end != -1 and end > start:
+            cleaned = cleaned[start:end + 1]
+
+    try:
+        parsed = json.loads(cleaned)
+        return parsed if isinstance(parsed, dict) else None
+    except Exception:
+        return None
+
+
+def _to_html_paragraphs(text: str) -> str:
+    lines = [line.strip() for line in (text or "").split("\n") if line.strip()]
+    if not lines:
+        return "<p></p>"
+    return "".join(f"<p>{html.escape(line)}</p>" for line in lines)
+
+
+def _build_fallback_idea_payload(data: IdeaWizardRequest) -> dict:
+    title = (data.title_hint or "").strip() or f"{data.genre} Story Blueprint"
+    outline = [
+        f"Chapter {i + 1}: Core development for {data.idea[:50]}"
+        for i in range(data.chapter_count)
+    ]
+    first_chapter_title = outline[0]
+    first_chapter_draft = (
+        f"Opening scene for a {data.tone.lower()} {data.genre.lower()} project aimed at {data.audience}.\n"
+        f"Premise: {data.idea}\n"
+        "Introduce the central conflict and establish the narrative voice."
+    )
+    return {
+        "title": title,
+        "description": f"AI-generated outline for a {data.genre} project.",
+        "outline": outline,
+        "first_chapter_title": first_chapter_title,
+        "first_chapter_draft": first_chapter_draft,
+    }
+
 @api_router.post("/ai/suggest", response_model=AIResponse)
 @limiter.limit(settings.RATE_LIMIT_AI)
 async def ai_suggest(request: Request, ai_request: AIRequest, user: dict = Depends(get_current_user)):
@@ -666,6 +735,131 @@ async def ai_suggest(request: Request, ai_request: AIRequest, user: dict = Depen
     except Exception as e:
         logger.error(f"AI error: {e}")
         return AIResponse(result=f"AI unavailable: {str(e)}", type=ai_request.type)
+
+
+@api_router.post("/ideas/wizard-create", response_model=IdeaWizardResponse)
+@limiter.limit(settings.RATE_LIMIT_AI)
+async def create_book_from_idea_wizard(request: Request, data: IdeaWizardRequest, user: dict = Depends(get_current_user)):
+    if not await check_subscription_limit(db, user["id"], "ai"):
+        raise HTTPException(status_code=429, detail="Monthly AI limit reached. Please upgrade your plan.")
+
+    prompt = f"""
+You are an expert book development assistant.
+Create a structured launch plan from the following inputs:
+- Idea: {data.idea}
+- Genre: {data.genre}
+- Tone: {data.tone}
+- Target audience: {data.audience}
+- Desired chapter count: {data.chapter_count}
+- Optional title hint: {data.title_hint or 'None'}
+
+Return strict JSON only with this schema:
+{{
+  "title": "string",
+  "description": "string",
+  "outline": ["Chapter 1 title", "Chapter 2 title"],
+  "first_chapter_title": "string",
+  "first_chapter_draft": "plain text 600-1000 words"
+}}
+
+Rules:
+- Keep outline length exactly {data.chapter_count}
+- Do not include markdown or code fences
+""".strip()
+
+    payload = None
+    try:
+        from emergentintegrations.llm.chat import LlmChat, UserMessage
+        chat = LlmChat(
+            api_key=settings.EMERGENT_LLM_KEY,
+            session_id=f"legenddary-idea-wizard-{user['id']}-{uuid.uuid4()}"
+        )
+        chat.with_model("openai", "gpt-5.2")
+        ai_response = await chat.send_message(UserMessage(text=prompt))
+        payload = _extract_json_from_text(ai_response)
+    except Exception as e:
+        logger.error(f"Idea wizard AI error: {e}")
+
+    if not payload:
+        payload = _build_fallback_idea_payload(data)
+
+    raw_outline = payload.get("outline") if isinstance(payload.get("outline"), list) else []
+    outline = [str(item).strip() for item in raw_outline if str(item).strip()]
+
+    if not outline:
+        outline = _build_fallback_idea_payload(data)["outline"]
+
+    if len(outline) < data.chapter_count:
+        while len(outline) < data.chapter_count:
+            outline.append(f"Chapter {len(outline) + 1}: Development Arc")
+    elif len(outline) > data.chapter_count:
+        outline = outline[:data.chapter_count]
+
+    title = str(payload.get("title") or "").strip() or (data.title_hint or "").strip() or "Untitled Project"
+    description = str(payload.get("description") or "").strip() or f"AI-generated blueprint for {data.genre}."
+    first_chapter_title = str(payload.get("first_chapter_title") or "").strip() or outline[0]
+    first_chapter_draft = str(payload.get("first_chapter_draft") or "").strip()
+    if not first_chapter_draft:
+        first_chapter_draft = _build_fallback_idea_payload(data)["first_chapter_draft"]
+
+    book_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    book = {
+        "id": book_id,
+        "title": title,
+        "description": description,
+        "genre": data.genre,
+        "cover_data": None,
+        "user_id": user["id"],
+        "created_at": now,
+        "updated_at": now,
+        "chapter_count": 0,
+        "word_count": 0,
+    }
+    await db.books.insert_one(book)
+
+    first_chapter_id = ""
+    for index, chapter_title in enumerate(outline):
+        chapter_id = str(uuid.uuid4())
+        if index == 0:
+            content_html = _to_html_paragraphs(first_chapter_draft)
+            chapter_name = first_chapter_title
+            first_chapter_id = chapter_id
+        else:
+            outline_note = (
+                f"Outline target: {chapter_title}\n"
+                f"Tone: {data.tone}\n"
+                f"Audience: {data.audience}\n"
+                "Expand this chapter with scenes, details, and transitions."
+            )
+            content_html = _to_html_paragraphs(outline_note)
+            chapter_name = chapter_title
+
+        chapter = {
+            "id": chapter_id,
+            "book_id": book_id,
+            "title": chapter_name,
+            "content": content_html,
+            "type": "chapter",
+            "order": (index + 1) * 10,
+            "word_count": len(re.sub(r"<[^>]+>", " ", content_html).split()),
+            "tags": [],
+            "created_at": now,
+            "updated_at": now,
+        }
+        await db.chapters.insert_one(chapter)
+
+    await update_book_stats(book_id)
+    await increment_usage(db, user["id"], "ai")
+    log_ai_usage(user["id"], "idea_wizard", len(prompt))
+
+    return IdeaWizardResponse(
+        book_id=book_id,
+        title=title,
+        chapter_count=len(outline),
+        outline=outline,
+        first_chapter_id=first_chapter_id,
+    )
 
 # ==================== IMAGE SEARCH ====================
 
