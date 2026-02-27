@@ -12,7 +12,7 @@ import { Sheet, SheetContent, SheetTrigger } from '../components/ui/sheet';
 import { 
   BookOpen, Plus, LogOut, FileText, Image, PenTool, 
   Share2, TrendingUp, Search, MoreVertical,
-  Edit, Trash2, Palette, Clock, BarChart3, Menu, Calculator, BookMarked
+  Edit, Trash2, Palette, Clock, BarChart3, Menu, Calculator, BookMarked, Upload
 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import axios from 'axios';
@@ -88,6 +88,7 @@ const Dashboard = () => {
 
   const navItems = [
     { icon: FileText, label: 'Dashboard', path: '/dashboard', active: true },
+    { icon: Upload, label: 'Import Center', path: '/import' },
     { icon: BookMarked, label: 'Templates', path: '/templates' },
     { icon: Image, label: 'Image Finder', path: '/images' },
     { icon: PenTool, label: 'Signature Studio', path: '/signature' },
