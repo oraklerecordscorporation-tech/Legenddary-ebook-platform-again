@@ -4,7 +4,6 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import TextAlign from '@tiptap/extension-text-align';
-import Underline from '@tiptap/extension-underline';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { ScrollArea } from '../components/ui/scroll-area';
@@ -102,7 +101,6 @@ const BookEditor = () => {
   const editor = useEditor({
     extensions: [
       StarterKit,
-      Underline,
       TextAlign.configure({
         types: ['heading', 'paragraph'],
       }),
