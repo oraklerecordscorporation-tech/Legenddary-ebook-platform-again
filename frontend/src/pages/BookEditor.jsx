@@ -746,36 +746,47 @@ const BookEditor = () => {
       {/* Main Editor */}
       <main className={`flex-1 flex flex-col overflow-hidden ${isFocusMode ? 'md:ml-0 pt-0' : 'md:ml-80 pt-14 md:pt-0'}`}>
         {/* Toolbar */}
-        <div className="bg-white border-b border-[#E5E5E0] px-2 md:px-4 py-2 flex items-center gap-1 md:gap-2 overflow-x-auto">
-          <div className="flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
-            <ToolbarButton icon={Heading1} active={editor?.isActive('heading', { level: 1 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} tooltip="H1" />
-            <ToolbarButton icon={Heading2} active={editor?.isActive('heading', { level: 2 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} tooltip="H2" />
-          </div>
-          
-          <div className="flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
-            <ToolbarButton icon={Bold} active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()} tooltip="Bold" />
-            <ToolbarButton icon={Italic} active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()} tooltip="Italic" />
-            <ToolbarButton icon={UnderlineIcon} active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()} tooltip="Underline" />
-          </div>
+        <div className={`bg-white border-b border-[#E5E5E0] flex items-center gap-1 md:gap-2 overflow-x-auto ${isFocusMode ? 'px-3 md:px-6 py-3' : 'px-2 md:px-4 py-2'}`}>
+          {!isFocusMode && (
+            <>
+              <div className="flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
+                <ToolbarButton icon={Heading1} active={editor?.isActive('heading', { level: 1 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} tooltip="H1" />
+                <ToolbarButton icon={Heading2} active={editor?.isActive('heading', { level: 2 })} onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} tooltip="H2" />
+              </div>
 
-          <div className="hidden sm:flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
-            <ToolbarButton icon={AlignLeft} active={editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()} tooltip="Left" />
-            <ToolbarButton icon={AlignCenter} active={editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()} tooltip="Center" />
-            <ToolbarButton icon={AlignRight} active={editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()} tooltip="Right" />
-          </div>
+              <div className="flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
+                <ToolbarButton icon={Bold} active={editor?.isActive('bold')} onClick={() => editor?.chain().focus().toggleBold().run()} tooltip="Bold" />
+                <ToolbarButton icon={Italic} active={editor?.isActive('italic')} onClick={() => editor?.chain().focus().toggleItalic().run()} tooltip="Italic" />
+                <ToolbarButton icon={UnderlineIcon} active={editor?.isActive('underline')} onClick={() => editor?.chain().focus().toggleUnderline().run()} tooltip="Underline" />
+              </div>
 
-          <div className="hidden sm:flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
-            <ToolbarButton icon={List} active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()} tooltip="Bullets" />
-            <ToolbarButton icon={ListOrdered} active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()} tooltip="Numbers" />
-            <ToolbarButton icon={Quote} active={editor?.isActive('blockquote')} onClick={() => editor?.chain().focus().toggleBlockquote().run()} tooltip="Quote" />
-          </div>
+              <div className="hidden sm:flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
+                <ToolbarButton icon={AlignLeft} active={editor?.isActive({ textAlign: 'left' })} onClick={() => editor?.chain().focus().setTextAlign('left').run()} tooltip="Left" />
+                <ToolbarButton icon={AlignCenter} active={editor?.isActive({ textAlign: 'center' })} onClick={() => editor?.chain().focus().setTextAlign('center').run()} tooltip="Center" />
+                <ToolbarButton icon={AlignRight} active={editor?.isActive({ textAlign: 'right' })} onClick={() => editor?.chain().focus().setTextAlign('right').run()} tooltip="Right" />
+              </div>
 
-          <div className="flex items-center gap-0.5 md:gap-1">
-            <ToolbarButton icon={RotateCcw} onClick={() => editor?.chain().focus().undo().run()} tooltip="Undo" />
-            <ToolbarButton icon={RotateCw} onClick={() => editor?.chain().focus().redo().run()} tooltip="Redo" />
-          </div>
+              <div className="hidden sm:flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
+                <ToolbarButton icon={List} active={editor?.isActive('bulletList')} onClick={() => editor?.chain().focus().toggleBulletList().run()} tooltip="Bullets" />
+                <ToolbarButton icon={ListOrdered} active={editor?.isActive('orderedList')} onClick={() => editor?.chain().focus().toggleOrderedList().run()} tooltip="Numbers" />
+                <ToolbarButton icon={Quote} active={editor?.isActive('blockquote')} onClick={() => editor?.chain().focus().toggleBlockquote().run()} tooltip="Quote" />
+              </div>
+
+              <div className="flex items-center gap-0.5 md:gap-1">
+                <ToolbarButton icon={RotateCcw} onClick={() => editor?.chain().focus().undo().run()} tooltip="Undo" />
+                <ToolbarButton icon={RotateCw} onClick={() => editor?.chain().focus().redo().run()} tooltip="Redo" />
+              </div>
+            </>
+          )}
 
           <div className="flex-1" />
+
+          {isFocusMode && (
+            <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full bg-[#D4AF37]/15 text-[#8D6A10] mr-2" data-testid="focus-mode-indicator">
+              <WandSparkles className="w-4 h-4" />
+              <span className="text-sm font-semibold">Focus Mode</span>
+            </div>
+          )}
 
           {/* Page Number Display */}
           {activeChapter && activeChapter.type === 'chapter' && (
@@ -786,23 +797,33 @@ const BookEditor = () => {
           )}
 
           {/* Word Count */}
-          <div className="hidden md:flex items-center gap-2 text-sm text-[#1A1A1A]/50 mr-2">
+          <div className="flex items-center gap-2 text-sm text-[#1A1A1A]/50 mr-2" data-testid="editor-word-count">
             {activeChapter && <span>{activeChapter.word_count?.toLocaleString() || 0} words</span>}
           </div>
 
           {/* Last Saved */}
           {lastSaved && (
-            <div className="hidden md:flex items-center gap-1 text-xs text-green-600 mr-2">
+            <div className="hidden md:flex items-center gap-1 text-xs text-green-600 mr-2" data-testid="editor-last-saved-indicator">
               <CheckCircle className="w-3 h-3" />
               Saved {lastSaved}
             </div>
           )}
 
-          {/* SAVE BUTTON - Desktop */}
+          <Button
+            onClick={toggleFocusMode}
+            variant="outline"
+            className={`h-10 px-4 font-semibold mr-2 ${isFocusMode ? 'border-[#8D6A10]/40 text-[#8D6A10] hover:bg-[#D4AF37]/10' : 'border-[#1A1A1A]/20 text-[#1A1A1A]/80'}`}
+            data-testid="toggle-focus-mode-btn"
+          >
+            <Minimize2 className="w-4 h-4 mr-2" />
+            {isFocusMode ? 'Exit Focus' : 'Focus Mode'}
+          </Button>
+
+          {/* SAVE BUTTON - Desktop & Focus */}
           <Button
             onClick={saveChapter}
             disabled={saving || !activeChapter}
-            className="hidden md:flex bg-green-600 hover:bg-green-700 text-white h-10 px-6 text-base font-semibold"
+            className={`${isFocusMode ? 'flex' : 'hidden md:flex'} bg-green-600 hover:bg-green-700 text-white h-10 px-6 text-base font-semibold`}
             data-testid="save-btn"
           >
             {saving ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Save className="w-5 h-5 mr-2" />}
@@ -810,6 +831,7 @@ const BookEditor = () => {
           </Button>
 
           {/* Text-to-Speech Button */}
+          {!isFocusMode && (
           <Dialog open={ttsDialogOpen} onOpenChange={setTtsDialogOpen}>
             <DialogTrigger asChild>
               <Button
@@ -893,8 +915,10 @@ const BookEditor = () => {
               </div>
             </DialogContent>
           </Dialog>
+          )}
 
           {/* Version History Button */}
+          {!isFocusMode && (
           <Dialog open={historyDialogOpen} onOpenChange={(open) => { setHistoryDialogOpen(open); if (open) fetchVersions(); }}>
             <DialogTrigger asChild>
               <Button
@@ -962,16 +986,19 @@ const BookEditor = () => {
               </div>
             </DialogContent>
           </Dialog>
+          )}
 
           {/* AI Button */}
-          <Button
-            onClick={() => setAiPanelOpen(!aiPanelOpen)}
-            className={`hidden md:flex h-10 px-4 text-base font-semibold ${aiPanelOpen ? 'bg-[#D4AF37] text-[#0A0A0A]' : 'bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30'}`}
-            data-testid="toggle-ai-panel"
-          >
-            <Sparkles className="w-5 h-5 mr-2" />
-            AI
-          </Button>
+          {!isFocusMode && (
+            <Button
+              onClick={() => setAiPanelOpen(!aiPanelOpen)}
+              className={`hidden md:flex h-10 px-4 text-base font-semibold ${aiPanelOpen ? 'bg-[#D4AF37] text-[#0A0A0A]' : 'bg-[#D4AF37]/20 text-[#D4AF37] hover:bg-[#D4AF37]/30'}`}
+              data-testid="toggle-ai-panel"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              AI
+            </Button>
+          )}
         </div>
 
         {/* Editor Content */}
