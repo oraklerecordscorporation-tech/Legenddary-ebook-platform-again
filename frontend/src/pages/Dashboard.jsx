@@ -246,12 +246,26 @@ const Dashboard = () => {
                       <SelectTrigger className="bg-white/5 border-white/10" data-testid="new-book-genre">
                         <SelectValue placeholder="Select genre" />
                       </SelectTrigger>
-                      <SelectContent className="bg-[#1A1A1A] border-white/10">
+                      <SelectContent
+                        position="item-aligned"
+                        className="max-h-64 bg-[#141414] border-[#D4AF37]/30 overflow-y-auto scrollbar-thin scrollbar-thumb-[#D4AF37]/60 scrollbar-track-white/10"
+                        data-testid="new-book-genre-options"
+                      >
                         {genres.map((genre) => (
-                          <SelectItem key={genre} value={genre}>{genre}</SelectItem>
+                          <SelectItem
+                            key={genre}
+                            value={genre}
+                            className="text-[#F5F5F0] data-[highlighted]:bg-[#D4AF37]/20 data-[highlighted]:text-[#F5F5F0] data-[state=checked]:bg-[#D4AF37]/30 data-[state=checked]:text-[#D4AF37]"
+                            data-testid={`new-book-genre-option-${genre.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+                          >
+                            {genre}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
+                    <p className="text-xs text-[#E5E5E0]/55" data-testid="new-book-genre-scroll-hint">
+                      Scroll to view all genres. Hover and selected items are highlighted.
+                    </p>
                   </div>
                   <Button 
                     onClick={createBook} 
