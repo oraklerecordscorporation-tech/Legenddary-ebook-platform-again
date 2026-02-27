@@ -53,9 +53,26 @@ Build a comprehensive, all-in-one AI-powered eBook creation platform that guides
 - ✅ Added/expanded `data-testid` coverage for critical Import Center interactions.
 - ✅ Accessibility improvement: Create Book dialog now includes description.
 
+### 2026-02-27 (UX expansion - Idea Wizard + Focus Mode)
+- ✅ Added **Idea Wizard** (`/idea-wizard`) with guided inputs (idea, genre, tone, audience, chapter count, optional title hint).
+- ✅ Added backend endpoint `POST /api/ideas/wizard-create` to generate and create:
+  - Book record
+  - Full chapter outline (requested chapter count)
+  - First chapter draft content
+- ✅ Added dashboard entry points for wizard:
+  - Sidebar nav item
+  - Header CTA
+  - Empty-state CTA
+- ✅ Added **Focus Mode** in editor:
+  - Auto-opens when arriving via wizard (`?focus=1`)
+  - Hides sidebars and AI panel for distraction-free writing
+  - Wider reading/writing layout and quick exit toggle
+- ✅ Fixed BookEditor chapter list HTML semantics issue (removed nested button warning by refactoring row actions).
+
 ## Current Status
 - **P0 functional blocker fixed**: users can create books again.
 - Import features are now wired end-to-end and tested.
+- Idea-to-draft workflow is now available and opens directly in focus writing mode.
 - OAuth-based private Google Drive access is not yet enabled (public-link workflow is implemented).
 
 ## Prioritized Backlog
@@ -69,6 +86,7 @@ Build a comprehensive, all-in-one AI-powered eBook creation platform that guides
 - [ ] MOBI export
 - [ ] Refactor oversized files (`backend/server.py`, `frontend/pages/BookEditor.jsx`)
 - [ ] Improve Import Center UX for mobile tab overflow and remove prompt-based title input with modal form
+- [ ] Upgrade Idea Wizard output quality with structured scene beats per chapter and editable pre-create review step
 
 ### P2 (Future)
 - [ ] Real-time collaboration + inline comments
@@ -80,3 +98,4 @@ Build a comprehensive, all-in-one AI-powered eBook creation platform that guides
 1. Implement Google Drive OAuth connect/callback flow (after credentials are provided).
 2. Add MOBI export path in export API and frontend.
 3. Start modular refactor of `server.py` into routers and split BookEditor logic into hooks/components.
+4. Add "Idea Wizard Review" step to let users edit title/outline before final book creation.
