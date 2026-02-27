@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
 import { 
   ArrowLeft, Upload, FileText, Link as LinkIcon, Clipboard, 
-  Loader2, CheckCircle, XCircle, GripVertical, Trash2, Plus,
+  Loader2, GripVertical, Trash2, Plus,
   FolderOpen, CloudDownload, FileUp
 } from 'lucide-react';
 import axios from 'axios';
