@@ -311,7 +311,7 @@ async def request_password_reset(request: Request, data: PasswordResetRequest):
     user = await db.users.find_one({"email": data.email}, {"_id": 0})
     # Always return success to prevent email enumeration
     if user:
-        token = create_password_reset_token(user["id"], user["email"])
+        create_password_reset_token(user["id"], user["email"])
         # In production, send email with reset link
         logger.info(f"Password reset requested for {data.email}")
     return {"message": "If email exists, reset instructions sent"}
