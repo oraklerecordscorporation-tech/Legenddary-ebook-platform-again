@@ -21,6 +21,7 @@ from datetime import datetime, timezone
 import base64
 import io
 import re
+from urllib.parse import parse_qs, urlparse
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas as pdf_canvas
 from ebooklib import epub
@@ -952,6 +953,28 @@ async def detect_structure(data: dict, user: dict = Depends(get_current_user)):
 import aiohttp
 from bs4 import BeautifulSoup
 
+
+def _extract_google_drive_file_id(url: str) -> Optional[str]:
+    parsed = urlparse(url)
+    if "drive.google.com" not in parsed.netloc:
+        return None
+
+    file_match = re.search(r"/file/d/([a-zA-Z0-9_-]+)", parsed.path)
+    if file_match:
+        return file_match.group(1)
+
+    query = parse_qs(parsed.query)
+    return query.get("id", [None])[0]
+
+
+def _looks_like_docx(content_type: str, source_url: str, content: bytes) -> bool:
+    content_type_lower = content_type.lower()
+    if "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in content_type_lower:
+        return True
+    if source_url.lower().endswith(".docx"):
+        return True
+    return content.startswith(b"PK\x03\x04")
+
 @api_router.post("/import/batch")
 async def batch_import(files: List[UploadFile] = File(...), user: dict = Depends(get_current_user)):
     """Import multiple .docx files at once"""
@@ -970,7 +993,7 @@ async def batch_import(files: List[UploadFile] = File(...), user: dict = Depends
 
 @api_router.post("/import/url")
 async def import_from_url(data: dict, user: dict = Depends(get_current_user)):
-    """Import content from a URL (Google Docs, web pages)"""
+    """Import content from a URL (Google Docs, Google Drive, web pages)"""
     url = data.get("url", "")
     if not url:
         raise HTTPException(status_code=400, detail="URL required")
@@ -981,6 +1004,11 @@ async def import_from_url(data: dict, user: dict = Depends(get_current_user)):
             doc_id = re.search(r'/d/([a-zA-Z0-9-_]+)', url)
             if doc_id:
                 url = f"https://docs.google.com/document/d/{doc_id.group(1)}/export?format=txt"
+        elif "drive.google.com" in url:
+            file_id = _extract_google_drive_file_id(url)
+            if not file_id:
+                raise HTTPException(status_code=400, detail="Invalid Google Drive link")
+            url = f"https://drive.google.com/uc?export=download&id={file_id}"
         
         async with aiohttp.ClientSession() as session:
             async with session.get(url, timeout=30) as resp:
@@ -989,6 +1017,10 @@ async def import_from_url(data: dict, user: dict = Depends(get_current_user)):
                 
                 content_type = resp.headers.get('content-type', '')
                 content = await resp.read()
+
+                if _looks_like_docx(content_type, url, content):
+                    sections = parse_docx(content)
+                    return {"sections": sections, "count": len(sections), "source": url}
                 
                 if 'html' in content_type:
                     soup = BeautifulSoup(content, 'html.parser')
@@ -1001,6 +1033,8 @@ async def import_from_url(data: dict, user: dict = Depends(get_current_user)):
                     sections = smart_split_content(text, "chapter")
                 
                 return {"sections": sections, "count": len(sections), "source": url}
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Import failed: {str(e)}")
 
