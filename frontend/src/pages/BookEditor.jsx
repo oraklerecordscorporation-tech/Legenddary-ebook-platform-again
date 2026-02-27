@@ -510,28 +510,34 @@ const BookEditor = () => {
           </CollapsibleTrigger>
           <CollapsibleContent className="space-y-1 mt-1">
             {items.map((chapter) => (
-              <button
+              <div
                 key={chapter.id}
-                onClick={() => {
-                  setActiveChapter(chapter);
-                  setChapterSidebarOpen(false);
-                }}
-                className={`group flex items-center gap-2 w-full px-3 py-3 rounded-lg text-left transition-colors ${
+                className={`group flex items-center gap-2 w-full px-2 py-2 rounded-lg transition-colors ${
                   activeChapter?.id === chapter.id
-                    ? 'bg-[#D4AF37] text-[#0A0A0A] font-semibold'
+                    ? 'bg-[#D4AF37] text-[#0A0A0A]'
                     : 'text-[#E5E5E0]/70 hover:bg-white/10 hover:text-[#E5E5E0]'
                 }`}
-                data-testid={`chapter-${chapter.id}`}
+                data-testid={`chapter-row-${chapter.id}`}
               >
-                {chapter.type === 'chapter' && (
-                  <span className="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-xs font-bold">
-                    {getPageNumber(chapter)}
-                  </span>
-                )}
-                <FileText className="w-4 h-4 shrink-0" />
-                <span className="truncate flex-1">{chapter.title}</span>
                 <button
-                  onClick={(e) => { e.stopPropagation(); deleteChapter(chapter.id); }}
+                  onClick={() => {
+                    setActiveChapter(chapter);
+                    setChapterSidebarOpen(false);
+                  }}
+                  className="flex items-center gap-2 flex-1 text-left px-1 py-1"
+                  data-testid={`chapter-${chapter.id}`}
+                >
+                  {chapter.type === 'chapter' && (
+                    <span className="w-6 h-6 rounded bg-white/10 flex items-center justify-center text-xs font-bold">
+                      {getPageNumber(chapter)}
+                    </span>
+                  )}
+                  <FileText className="w-4 h-4 shrink-0" />
+                  <span className="truncate flex-1">{chapter.title}</span>
+                </button>
+
+                <button
+                  onClick={() => deleteChapter(chapter.id)}
                   className={`opacity-0 group-hover:opacity-100 p-1 rounded ${
                     activeChapter?.id === chapter.id ? 'text-[#0A0A0A]/60 hover:text-[#0A0A0A]' : 'text-red-400 hover:text-red-300'
                   }`}
@@ -539,7 +545,7 @@ const BookEditor = () => {
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
-              </button>
+              </div>
             ))}
           </CollapsibleContent>
         </Collapsible>
