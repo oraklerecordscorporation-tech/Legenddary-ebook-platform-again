@@ -1030,7 +1030,19 @@ const BookEditor = () => {
                     No section selected
                   </h3>
                   <p className="text-[#1A1A1A]/50 mb-4">Create a section to start writing</p>
-                  <Button onClick={() => setIsCreateChapterOpen(true)} className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-[#0A0A0A] h-14 px-8 text-lg font-semibold" data-testid="create-first-section-btn">
+                  <Button
+                    onClick={() => {
+                      if (isFocusMode) {
+                        const updated = new URLSearchParams(searchParams.toString());
+                        updated.delete('focus');
+                        setSearchParams(updated, { replace: true });
+                        setIsFocusMode(false);
+                      }
+                      setIsCreateChapterOpen(true);
+                    }}
+                    className="bg-[#D4AF37] hover:bg-[#D4AF37]/80 text-[#0A0A0A] h-14 px-8 text-lg font-semibold"
+                    data-testid="create-first-section-btn"
+                  >
                     <Plus className="w-5 h-5 mr-2" />
                     Add First Section
                   </Button>
