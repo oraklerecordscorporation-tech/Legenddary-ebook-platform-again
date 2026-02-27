@@ -829,3 +829,121 @@ app.add_middleware(
 @app.on_event("shutdown")
 async def shutdown_db_client():
     client.close()
+
+# ==================== DOCUMENT IMPORT/EXPORT ====================
+from fastapi import UploadFile, File
+from document_service import parse_docx, export_to_html, export_to_txt, export_to_docx, analyze_content_structure, smart_split_content
+
+@api_router.post("/import/docx")
+async def import_docx(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    if not file.filename.endswith('.docx'):
+        raise HTTPException(status_code=400, detail="Only .docx files supported")
+    content = await file.read()
+    sections = parse_docx(content)
+    return {"sections": sections, "count": len(sections)}
+
+@api_router.post("/books/{book_id}/import")
+async def import_to_book(book_id: str, file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    book = await db.books.find_one({"id": book_id, "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    if not file.filename.endswith('.docx'):
+        raise HTTPException(status_code=400, detail="Only .docx files supported")
+    
+    content = await file.read()
+    sections = parse_docx(content)
+    
+    created = []
+    for i, section in enumerate(sections):
+        chapter_id = str(uuid.uuid4())
+        now = datetime.now(timezone.utc).isoformat()
+        chapter = {
+            "id": chapter_id, "book_id": book_id, "title": section["title"],
+            "content": section["content"], "type": section["type"],
+            "order": i * 10, "word_count": len(section["content"].split()),
+            "tags": [], "created_at": now, "updated_at": now
+        }
+        await db.chapters.insert_one(chapter)
+        created.append(chapter_id)
+    
+    await update_book_stats(book_id)
+    return {"imported": len(created), "chapters": created}
+
+@api_router.post("/export/html")
+async def export_html(export_req: ExportRequest, user: dict = Depends(get_current_user)):
+    book = await db.books.find_one({"id": export_req.book_id, "user_id": user["id"]}, {"_id": 0})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    chapters = await db.chapters.find({"book_id": export_req.book_id}, {"_id": 0}).sort("order", 1).to_list(100)
+    html = export_to_html(book, chapters)
+    return {"format": "html", "filename": f"{book['title']}.html", "data": base64.b64encode(html.encode()).decode(), "content_type": "text/html"}
+
+@api_router.post("/export/txt")
+async def export_txt(export_req: ExportRequest, user: dict = Depends(get_current_user)):
+    book = await db.books.find_one({"id": export_req.book_id, "user_id": user["id"]}, {"_id": 0})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    chapters = await db.chapters.find({"book_id": export_req.book_id}, {"_id": 0}).sort("order", 1).to_list(100)
+    txt = export_to_txt(book, chapters)
+    return {"format": "txt", "filename": f"{book['title']}.txt", "data": base64.b64encode(txt.encode()).decode(), "content_type": "text/plain"}
+
+@api_router.post("/export/docx")
+async def export_docx_file(export_req: ExportRequest, user: dict = Depends(get_current_user)):
+    book = await db.books.find_one({"id": export_req.book_id, "user_id": user["id"]}, {"_id": 0})
+    if not book:
+        raise HTTPException(status_code=404, detail="Book not found")
+    chapters = await db.chapters.find({"book_id": export_req.book_id}, {"_id": 0}).sort("order", 1).to_list(100)
+    docx_bytes = export_to_docx(book, chapters)
+    return {"format": "docx", "filename": f"{book['title']}.docx", "data": base64.b64encode(docx_bytes).decode(), "content_type": "application/vnd.openxmlformats-officedocument.wordprocessingml.document"}
+
+# ==================== TAGS & SEARCH ====================
+
+@api_router.put("/chapters/{chapter_id}/tags")
+async def update_tags(chapter_id: str, tags: List[str], user: dict = Depends(get_current_user)):
+    chapter = await db.chapters.find_one({"id": chapter_id}, {"_id": 0})
+    if not chapter:
+        raise HTTPException(status_code=404, detail="Chapter not found")
+    book = await db.books.find_one({"id": chapter["book_id"], "user_id": user["id"]})
+    if not book:
+        raise HTTPException(status_code=403, detail="Access denied")
+    await db.chapters.update_one({"id": chapter_id}, {"$set": {"tags": tags}})
+    return {"tags": tags}
+
+@api_router.get("/search")
+async def search_content(q: str, user: dict = Depends(get_current_user)):
+    books = await db.books.find({"user_id": user["id"], "$or": [{"title": {"$regex": q, "$options": "i"}}, {"description": {"$regex": q, "$options": "i"}}]}, {"_id": 0}).to_list(50)
+    chapters = []
+    user_books = await db.books.find({"user_id": user["id"]}, {"_id": 0, "id": 1}).to_list(100)
+    book_ids = [b["id"] for b in user_books]
+    if book_ids:
+        chapters = await db.chapters.find({"book_id": {"$in": book_ids}, "$or": [{"title": {"$regex": q, "$options": "i"}}, {"content": {"$regex": q, "$options": "i"}}, {"tags": {"$in": [q]}}]}, {"_id": 0, "content": 0}).to_list(50)
+    return {"books": books, "chapters": chapters}
+
+# ==================== AI ANALYSIS ====================
+
+@api_router.post("/ai/analyze")
+async def ai_analyze(data: dict, user: dict = Depends(get_current_user)):
+    content = data.get("content", "")
+    if not content:
+        return {"suggestion": None}
+    
+    analysis = analyze_content_structure(content)
+    
+    if analysis["suggestions"]:
+        return {"suggestion": analysis["suggestions"][0], "analysis": analysis}
+    
+    # Generate contextual suggestion
+    word_count = analysis["word_count"]
+    if word_count < 100:
+        return {"suggestion": {"type": "question", "message": "Just getting started? Would you like some opening line suggestions?"}}
+    elif word_count > 1000 and word_count % 500 < 50:
+        return {"suggestion": {"type": "improvement", "message": f"Great progress! You've written {word_count} words. Want me to review your flow?"}}
+    
+    return {"suggestion": None, "analysis": analysis}
+
+@api_router.post("/ai/detect-structure")
+async def detect_structure(data: dict, user: dict = Depends(get_current_user)):
+    content = data.get("content", "")
+    split_by = data.get("split_by", "chapter")
+    chapters = smart_split_content(content, split_by)
+    return {"chapters": chapters, "count": len(chapters)}
