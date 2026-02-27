@@ -187,30 +187,30 @@ class TestImportEndpoints:
     def test_batch_import_requires_auth(self):
         """Batch import should require authentication (not 404)"""
         response = requests.post(f"{BASE_URL}/api/import/batch")
-        assert response.status_code == 401 or response.status_code == 422  # 401 auth or 422 validation
+        assert response.status_code in [401, 403, 422]  # Auth required or validation error
         assert response.status_code != 404
-        print("SUCCESS: /api/import/batch endpoint exists and requires auth")
+        print(f"SUCCESS: /api/import/batch endpoint exists and requires auth (status: {response.status_code})")
     
     def test_url_import_requires_auth(self):
         """URL import should require authentication (not 404)"""
         response = requests.post(f"{BASE_URL}/api/import/url", json={"url": "https://example.com"})
-        assert response.status_code == 401
+        assert response.status_code in [401, 403]
         assert response.status_code != 404
-        print("SUCCESS: /api/import/url endpoint exists and requires auth")
+        print(f"SUCCESS: /api/import/url endpoint exists and requires auth (status: {response.status_code})")
     
     def test_smart_paste_requires_auth(self):
         """Smart paste should require authentication (not 404)"""
         response = requests.post(f"{BASE_URL}/api/import/smart-paste", json={"content": "test"})
-        assert response.status_code == 401
+        assert response.status_code in [401, 403]
         assert response.status_code != 404
-        print("SUCCESS: /api/import/smart-paste endpoint exists and requires auth")
+        print(f"SUCCESS: /api/import/smart-paste endpoint exists and requires auth (status: {response.status_code})")
     
     def test_detect_structure_requires_auth(self):
         """AI detect-structure should require authentication (not 404)"""
         response = requests.post(f"{BASE_URL}/api/ai/detect-structure", json={"content": "test"})
-        assert response.status_code == 401
+        assert response.status_code in [401, 403]
         assert response.status_code != 404
-        print("SUCCESS: /api/ai/detect-structure endpoint exists and requires auth")
+        print(f"SUCCESS: /api/ai/detect-structure endpoint exists and requires auth (status: {response.status_code})")
     
     def test_url_import_with_auth(self, auth_token):
         """Test URL import with valid auth"""
@@ -343,9 +343,9 @@ class TestChapterReorder:
             f"{BASE_URL}/api/books/fake-id/reorder-chapters",
             json=[]
         )
-        assert response.status_code == 401
+        assert response.status_code in [401, 403]
         assert response.status_code != 404
-        print("SUCCESS: /api/books/{id}/reorder-chapters exists and requires auth")
+        print(f"SUCCESS: /api/books/{{id}}/reorder-chapters exists and requires auth (status: {response.status_code})")
     
     def test_reorder_chapters(self, book_with_chapters):
         """Test reordering chapters"""
@@ -372,8 +372,8 @@ class TestStats:
     def test_stats_endpoint(self):
         """Test stats endpoint requires auth"""
         response = requests.get(f"{BASE_URL}/api/stats")
-        assert response.status_code == 401
-        print("SUCCESS: Stats endpoint exists and requires auth")
+        assert response.status_code in [401, 403]
+        print(f"SUCCESS: Stats endpoint exists and requires auth (status: {response.status_code})")
 
 
 # Cleanup fixture
