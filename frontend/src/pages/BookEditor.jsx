@@ -19,7 +19,7 @@ import {
   List, ListOrdered, Quote, Heading1, Heading2, RotateCcw, RotateCw,
   FileText, Lightbulb, Loader2, ChevronDown, Menu, Save, Image,
   SplitSquareHorizontal, CheckCircle, Hash, Play, Pause, Square, Volume2,
-  History, RotateCcw as Restore, WandSparkles, Minimize2
+  History, RotateCcw as Restore, WandSparkles, Minimize2, Maximize2
 } from 'lucide-react';
 import { Slider } from '../components/ui/slider';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '../components/ui/collapsible';
@@ -815,7 +815,7 @@ const BookEditor = () => {
             className={`h-10 px-4 font-semibold mr-2 ${isFocusMode ? 'border-[#8D6A10]/40 text-[#8D6A10] hover:bg-[#D4AF37]/10' : 'border-[#1A1A1A]/20 text-[#1A1A1A]/80'}`}
             data-testid="toggle-focus-mode-btn"
           >
-            <Minimize2 className="w-4 h-4 mr-2" />
+            {isFocusMode ? <Minimize2 className="w-4 h-4 mr-2" /> : <Maximize2 className="w-4 h-4 mr-2" />}
             {isFocusMode ? 'Exit Focus' : 'Focus Mode'}
           </Button>
 
