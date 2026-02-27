@@ -815,22 +815,6 @@ async def root():
 async def health():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat()}
 
-# ==================== APP SETUP ====================
-
-app.include_router(api_router)
-app.add_middleware(LoggingMiddleware)
-app.add_middleware(
-    CORSMiddleware,
-    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
-    allow_origins=settings.CORS_ORIGINS.split(','),
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-@app.on_event("shutdown")
-async def shutdown_db_client():
-    client.close()
-
 # ==================== DOCUMENT IMPORT/EXPORT ====================
 from fastapi import UploadFile, File
 from document_service import parse_docx, export_to_html, export_to_txt, export_to_docx, analyze_content_structure, smart_split_content
@@ -1118,3 +1102,21 @@ async def batch_import_to_book(book_id: str, files: List[UploadFile] = File(...)
     
     await update_book_stats(book_id)
     return {"imported": len(created), "chapters": created}
+
+
+# ==================== APP SETUP ====================
+
+app.include_router(api_router)
+app.add_middleware(LoggingMiddleware)
+app.add_middleware(
+    CORSMiddleware,
+    allow_credentials=settings.CORS_ALLOW_CREDENTIALS,
+    allow_origins=settings.CORS_ORIGINS.split(','),
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.on_event("shutdown")
+async def shutdown_db_client():
+    client.close()
