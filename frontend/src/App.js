@@ -14,6 +14,7 @@ import MarketingTips from "./pages/MarketingTips";
 import RoyaltyCalculator from "./pages/RoyaltyCalculator";
 import BookTemplates from "./pages/BookTemplates";
 import ImportCenter from "./pages/ImportCenter";
+import IdeaWizard from "./pages/IdeaWizard";
 import "./App.css";
 
 const ProtectedRoute = ({ children }) => {
@@ -64,6 +65,7 @@ function AppRoutes() {
       <Route path="/calculator" element={<ProtectedRoute><RoyaltyCalculator /></ProtectedRoute>} />
       <Route path="/templates" element={<ProtectedRoute><BookTemplates /></ProtectedRoute>} />
       <Route path="/import" element={<ProtectedRoute><ImportCenter /></ProtectedRoute>} />
+      <Route path="/idea-wizard" element={<ProtectedRoute><IdeaWizard /></ProtectedRoute>} />
     </Routes>
   );
 }
