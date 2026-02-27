@@ -556,8 +556,9 @@ const BookEditor = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F9F9F7] text-[#1A1A1A] flex flex-col md:flex-row">
+    <div className={`min-h-screen text-[#1A1A1A] flex flex-col md:flex-row ${isFocusMode ? 'bg-[#EFEDE6]' : 'bg-[#F9F9F7]'}`}>
       {/* Mobile Header */}
+      {!isFocusMode && (
       <div className="md:hidden fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A] text-white px-3 py-2 flex items-center justify-between">
         <Sheet open={chapterSidebarOpen} onOpenChange={setChapterSidebarOpen}>
           <SheetTrigger asChild>
@@ -622,8 +623,10 @@ const BookEditor = () => {
           </Sheet>
         </div>
       </div>
+      )}
 
       {/* Desktop Sidebar */}
+      {!isFocusMode && (
       <aside className="hidden md:flex w-80 bg-[#0A0A0A] text-[#F5F5F0] border-r border-white/5 flex-col fixed left-0 top-0 bottom-0">
         <div className="p-4 border-b border-white/5">
           <Link to="/dashboard" className="flex items-center gap-2 text-sm text-[#E5E5E0]/60 hover:text-[#E5E5E0] mb-4" data-testid="back-to-dashboard">
@@ -738,9 +741,10 @@ const BookEditor = () => {
           </Dialog>
         </div>
       </aside>
+      )}
 
       {/* Main Editor */}
-      <main className="flex-1 flex flex-col overflow-hidden md:ml-80 pt-14 md:pt-0">
+      <main className={`flex-1 flex flex-col overflow-hidden ${isFocusMode ? 'md:ml-0 pt-0' : 'md:ml-80 pt-14 md:pt-0'}`}>
         {/* Toolbar */}
         <div className="bg-white border-b border-[#E5E5E0] px-2 md:px-4 py-2 flex items-center gap-1 md:gap-2 overflow-x-auto">
           <div className="flex items-center gap-0.5 md:gap-1 border-r border-[#E5E5E0] pr-1 md:pr-2 mr-1 md:mr-2">
